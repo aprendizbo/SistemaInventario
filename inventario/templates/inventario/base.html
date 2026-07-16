@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Módulos de Inventario | Boccherini{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'boccherini-blue': '#001c40',
+                        'boccherini-gold': '#cda043',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .animacion-suave { transition: all 0.2s ease-in-out; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans text-slate-800">
+
+    <header class="bg-boccherini-blue shadow-md border-b-2 border-boccherini-gold sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            
+            <div class="flex items-center space-x-4">
+                <div class="bg-white p-1 rounded-md shadow-sm flex items-center justify-center">
+                    <img class="h-12 w-auto object-contain" src="https://boccherinicol.vtexassets.com/assets/vtex.file-manager-graphql/images/117104a7-a9bf-4a1c-ba2b-c33ac4db466e___dc9a4962633b58475c7995a25825a981.jpg" alt="Logo Boccherini">
+                </div>
+                <div class="h-8 w-[1px] bg-slate-600 hidden sm:block"></div>
+                <span class="text-white font-semibold text-sm tracking-wider uppercase hidden sm:block">Módulos de Inventario</span>
+            </div>
+            
+            <nav class="flex items-center space-x-2 sm:space-x-4">
+                <a href="{% url 'inventario:lista_productos' %}" class="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 py-2 rounded-lg animacion-suave {% if request.resolver_match.url_name == 'lista_productos' %}text-white bg-slate-800/50 border-b-2 border-boccherini-gold rounded-b-none{% endif %}">
+                    📦 Maestro Productos
+                </a>
+                
+                <a href="{% url 'inventario:panel_sesiones' %}" class="text-xs sm:text-sm font-medium text-slate-300 hover:text-white px-3 py-2 rounded-lg animacion-suave {% if request.resolver_match.url_name == 'panel_sesiones' %}text-white bg-slate-800/50 border-b-2 border-boccherini-gold rounded-b-none{% endif %}">
+                    🕒 Control de Sesiones
+                </a>
+                
+                <button onclick="abrirModalAdmin()" class="text-xs sm:text-sm font-medium text-slate-300 hover:text-white border border-slate-700 bg-slate-800/40 px-3 py-1.5 rounded-lg animacion-suave cursor-pointer focus:outline-none">
+                    ⚙️ Administración
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center">
+        <p class="text-xs text-slate-500 font-medium">
+            &copy; 2026 Boccherini S.A.S. | Módulo de Control de Inventarios Corporativo
+        </p>
+    </footer>
+
+    <!-- Ventana de Administración (Modal) -->
+    <div id="ventana-admin" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden transform scale-100 transition-transform mx-4">
+            
+            <div class="bg-boccherini-blue px-6 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">⚙️</span>
+                    <h3 class="text-white text-lg font-bold tracking-wide">Módulos de Administración</h3>
+                </div>
+                <button onclick="cerrarModalAdmin()" class="text-slate-300 hover:text-white transition-colors text-2xl font-bold p-1 leading-none focus:outline-none">
+                    &times;
+                </button>
+            </div>
+
+            <div class="p-6">
+                <p class="text-slate-500 text-sm mb-6">Seleccione el módulo interno que desea gestionar dentro de la base de datos.</p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <a href="{% url 'inventario:crear_producto' %}" class="block border border-slate-200 rounded-xl p-4 hover:border-boccherini-gold hover:shadow-md transition-all bg-slate-50 cursor-pointer">
+                        <h4 class="font-bold text-slate-800 text-md mb-1">📦 Base de Productos</h4>
+                        <p class="text-xs text-slate-500 mb-4">Agregar nuevos artículos al maestro general.</p>
+                        <span class="inline-block text-center text-xs font-bold text-white bg-boccherini-blue py-2 px-3 rounded-lg w-full transition-colors hover:bg-slate-800">Gestionar Productos</span>
+                    </a>
+
+                    <a href="{% url 'inventario:lista_novedades' %}" class="block border border-slate-200 rounded-xl p-4 hover:border-boccherini-gold hover:shadow-md transition-all bg-slate-50 cursor-pointer">
+                        <h4 class="font-bold text-slate-800 text-md mb-1">⚠️ Novedades</h4>
+                        <p class="text-xs text-slate-500 mb-4">Revisar códigos no registrados durante el escaneo.</p>
+                        <span class="inline-block text-center text-xs font-bold text-slate-900 bg-amber-400 py-2 px-3 rounded-lg w-full transition-colors hover:bg-amber-500">Ver Novedades</span>
+                    </a>
+
+                    <!-- Módulo de Usuarios Adaptado y Protegido para Administradores -->
+                    {% if request.user.is_staff %}
+                    <a href="{% url 'inventario:lista_usuarios' %}" class="block border border-slate-200 rounded-xl p-4 hover:border-boccherini-gold hover:shadow-md transition-all bg-slate-50 cursor-pointer">
+                        <h4 class="font-bold text-slate-800 text-md mb-1">👥 Usuarios y Accesos</h4>
+                        <p class="text-xs text-slate-500 mb-4">Control de cuentas y contraseñas de los operarios.</p>
+                        <span class="inline-block text-center text-xs font-bold text-white bg-slate-700 py-2 px-3 rounded-lg w-full transition-colors hover:bg-slate-800">Gestionar Accesos</span>
+                    </a>
+                    {% endif %}
+                    
+                    <!-- SOLUCIÓN AL ERROR 405: Formulario seguro POST para cerrar sesión -->
+                    <form action="{% url 'inventario:logout' %}" method="post" class="block border border-slate-200 rounded-xl p-4 hover:border-rose-300 hover:shadow-md transition-all bg-rose-50/30 m-0">
+                        {% csrf_token %}
+                        <h4 class="font-bold text-rose-700 text-md mb-1">🚪 Cerrar Sistema</h4>
+                        <p class="text-xs text-slate-500 mb-4">Finalizar la sesión segura del usuario actual.</p>
+                        <button type="submit" class="inline-block text-center text-xs font-bold text-white bg-rose-600 py-2 px-3 rounded-lg w-full transition-colors hover:bg-rose-700 border-none cursor-pointer">
+                            Cerrar Sesión
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function abrirModalAdmin() {
+            document.getElementById('ventana-admin').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function cerrarModalAdmin() {
+            document.getElementById('ventana-admin').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cierra el modal si el usuario hace clic afuera en la zona oscura
+        document.getElementById('ventana-admin').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModalAdmin();
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

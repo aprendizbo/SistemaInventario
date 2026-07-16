@@ -1,0 +1,123 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Selección de Sesión | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <!-- CABECERA: Botón de Auditoría e Integración -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Seleccione la Sesión de Trabajo</h2>
+            <p class="text-sm text-slate-500 mt-1">Elija o genere una sesión de control abierta para iniciar la lectura física.</p>
+        </div>
+        
+        <div class="flex gap-2">
+            <!-- Botón Auditoría -->
+            <a href="{% url 'inventario:historial_auditoria' %}" class="inline-flex items-center space-x-1 text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-4 py-2.5 rounded-xl shadow-sm animacion-suave">
+                <span>📋</span> <span>Auditoría</span>
+            </a>
+
+            <!-- Botón Nueva Sesión -->
+            <form action="{% url 'inventario:crear_sesion' %}" method="POST" class="inline-block">
+                {% csrf_token %}
+                <input type="hidden" name="nombre_sesion" value="">
+                <button type="submit" class="inline-flex items-center space-x-1 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl shadow-md animacion-suave border-0 cursor-pointer">
+                    <span>➕</span> <span>Nueva Sesión</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 🔔 Panel para mostrar mensajes de éxito al aplicar el inventario -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+            <span>{% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}</span>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="grid gap-6 sm:grid-cols-2">
+        {% for sesion in sesiones %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm hover:border-boccherini-gold hover:-translate-y-0.5 animacion-suave">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">ID: #{{ sesion.id }}</span>
+                    {% if sesion.estado == 'ABIERTA' %}
+                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center space-x-1">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Abierta</span>
+                    </span>
+                    {% else %}
+                    <span class="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        {{ sesion.estado|lower }}
+                    </span>
+                    {% endif %}
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 tracking-tight mb-1">{{ sesion.nombre|default:"Sesión sin descripción" }}</h3>
+                <p class="text-xs text-slate-400">Base: {{ sesion.fecha|date:"d M Y - h:i a"|default:"Reciente" }}</p>
+            </div>
+            
+            <!-- Contenedor de Acciones -->
+            <div class="mt-6 border-t border-slate-100 pt-4 flex flex-col gap-2">
+                {% if sesion.estado == 'ABIERTA' %}
+                    <!-- Fila Principal: Acceso directo al flujo del operario -->
+                    <a href="{% url 'inventario:pantalla_escaner' sesion.id %}" class="w-full inline-flex items-center justify-center bg-boccherini-blue hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors shadow-sm tracking-wide text-center">
+                        🎯 Entrar a Escanear
+                    </a>
+                    
+                    <!-- Fila Secundaria: Herramientas de control en vivo, conciliación y cierre -->
+                    <div class="flex gap-2">
+                        <a href="{% url 'inventario:exportar_conteo_csv' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center" title="Descargar avance actual en CSV">
+                            📊 CSV
+                        </a>
+                        
+                        <!-- ⚖️ Botón: Conciliación -->
+                        <a href="{% url 'inventario:conciliacion' sesion.id %}" class="flex-[1.5] inline-flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center" title="Ver diferencias y aplicar stock">
+                            ⚖️ Conciliar
+                        </a>
+
+                        <a href="{% url 'inventario:cerrar_sesion' sesion.id %}" onclick="return confirm('¿Seguro que deseas cerrar la sesión SIN aplicar el inventario? El escáner se bloqueará definitivamente.');" class="flex-1 inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors border border-rose-200 shadow-sm text-center" title="Cerrar sin actualizar maestro">
+                            🔒 Fin
+                        </a>
+                    </div>
+                {% else %}
+                    <!-- Estado Cerrado: Bloqueo visual + Conciliación Histórica + CSV -->
+                    <div class="flex gap-2 w-full">
+                        <div class="flex-1 inline-flex items-center justify-center bg-slate-50 text-slate-400 font-medium py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider border border-slate-200 select-none">
+                            ⛔ Cerrada
+                        </div>
+                        
+                        <!-- ⚖️ Botón HISTÓRICO: Ver cómo quedó el inventario -->
+                        <a href="{% url 'inventario:conciliacion' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center">
+                            ⚖️ Ajustes
+                        </a>
+
+                        <a href="{% url 'inventario:exportar_conteo_csv' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center">
+                            📊 CSV
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-2 bg-white rounded-2xl border border-slate-200/80 p-12 text-center max-w-lg mx-auto w-full shadow-sm">
+            <span class="text-4xl block mb-4">📂</span>
+            <h4 class="text-base font-bold text-slate-800">No hay tramas de control cargadas</h4>
+            <p class="text-xs text-slate-400 mt-1 mb-6 max-w-xs mx-auto">Para habilitar el escáner de códigos de barras, debe generar una sesión de control.</p>
+            
+            <form action="{% url 'inventario:crear_sesion' %}" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="text-sm font-bold text-boccherini-gold hover:text-amber-600 underline bg-transparent border-0 cursor-pointer">
+                    Crear una sesión de control inicial ahora &rarr;
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

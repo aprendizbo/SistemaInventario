@@ -1,0 +1,135 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Maestro de Productos | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Maestro de Productos</h2>
+            <p class="text-sm text-slate-500 mt-1">Lista general de artículos maestros importados y sincronizados.</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-3">
+            <button onclick="abrirModalAdmin()" class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm border border-slate-700 cursor-pointer">
+                <span>⚙️</span> <span>Administración</span>
+            </button>
+            
+            <a href="{% url 'inventario:importar_productos' %}" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm cursor-pointer">
+                <span>📥</span> <span>Importar Excel</span>
+            </a>
+
+            <!-- NUEVO: Botón para Exportar el Maestro a Excel -->
+            <a href="{% url 'inventario:exportar_excel' %}" class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm cursor-pointer">
+                <span>📤</span> <span>Exportar Excel</span>
+            </a>
+
+            <a href="{% url 'inventario:panel_sesiones' %}" class="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-boccherini-gold text-white font-bold px-5 py-2.5 rounded-xl shadow-md hover:opacity-90 animacion-suave text-sm">
+                <span>📷 Ir a Escanear Códigos</span>
+                <span>&rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 🔍 Barra de Búsqueda Conectada a Django -->
+    <div class="mb-6 max-w-xl">
+        <form method="GET" action="{% url 'inventario:lista_productos' %}" class="flex gap-2">
+            <div class="relative rounded-xl shadow-sm flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    🔍
+                </div>
+                <input type="text" name="q" value="{{ query }}" placeholder="Buscar por descripción o código..." 
+                       class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm transition-all text-slate-700 shadow-sm">
+            </div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm">
+                Buscar
+            </button>
+            
+            {% if query %}
+            <a href="{% url 'inventario:lista_productos' %}" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-4 py-2.5 rounded-xl border border-red-200 shadow-sm transition-colors text-sm flex items-center">
+                ✖ Limpiar
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+        <div class="bg-boccherini-blue px-6 py-4 flex items-center justify-between" style="background-color: #0b2240;">
+            <h3 class="text-white font-bold text-base tracking-wide">
+                {% if query %}Resultados para: "{{ query }}"{% else %}Base de Datos de Artículos{% endif %}
+            </h3>
+            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-widest text-center">
+                ● Conexión Activa MariaDB
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        <th class="px-6 py-4">Código de Barras</th>
+                        <th class="px-6 py-4">Descripción del Producto</th>
+                        <th class="px-6 py-4 text-center">Stock Teórico</th>
+                        <th class="px-6 py-4 text-center">Zonificación (R / E / N)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for producto in page_obj %}
+                    <tr class="hover:bg-slate-50/80 animacion-suave">
+                        <td class="px-6 py-4 font-mono font-bold text-slate-700 tracking-wide">{{ producto.codigo_barras }}</td>
+                        <td class="px-6 py-4 text-slate-600 font-medium">{{ producto.descripcion }}</td>
+                        <td class="px-6 py-4 text-center font-bold text-blue-800">{{ producto.stock_teorico }}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center space-x-1 bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-600 border border-slate-200">
+                                <span>{{ producto.rack|default:"--" }}</span>
+                                <span class="text-slate-300">/</span>
+                                <span>{{ producto.espacio|default:"--" }}</span>
+                                <span class="text-slate-300">/</span>
+                                <span>{{ producto.nivel|default:"--" }}</span>
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">
+                            No se encontraron coincidencias.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CONTROLES DE PAGINACIÓN -->
+    <div class="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-xl shadow-sm">
+        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-slate-700">
+                    Página <span class="font-medium">{{ page_obj.number }}</span> de <span class="font-medium">{{ page_obj.paginator.num_pages }}</span>
+                </p>
+            </div>
+            <div>
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center rounded-l-md px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">&laquo; Primera</a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">Anterior</a>
+                    {% else %}
+                        <span class="relative inline-flex items-center rounded-l-md px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">&laquo; Primera</span>
+                        <span class="relative inline-flex items-center px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">Anterior</span>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">Siguiente</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center rounded-r-md px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">Última &raquo;</a>
+                    {% else %}
+                        <span class="relative inline-flex items-center px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">Siguiente</span>
+                        <span class="relative inline-flex items-center rounded-r-md px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">Última &raquo;</span>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

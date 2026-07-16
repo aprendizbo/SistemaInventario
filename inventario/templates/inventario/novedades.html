@@ -1,0 +1,76 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Novedades en Vivo | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Novedades en Bodega</h2>
+            <p class="text-sm text-slate-500 mt-1">Registros de códigos de barras escaneados que no existen en el maestro de productos.</p>
+        </div>
+    </div>
+
+    <!-- 🔔 Capturador de Alertas de Éxito -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+            <span>{% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}</span>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+        <div class="bg-slate-800 px-6 py-4">
+            <h3 class="text-white font-bold text-base tracking-wide">Códigos Huérfanos Capturados</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        <th class="px-6 py-4">Sesión</th>
+                        <th class="px-6 py-4">Código Escaneado</th>
+                        <th class="px-6 py-4 text-center">Cant.</th>
+                        <th class="px-6 py-4">Auditor</th>
+                        <th class="px-6 py-4 text-center">Acciones de Resolución</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for novedad in novedades %}
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4 font-medium text-slate-700">{{ novedad.sesion.nombre }}</td>
+                        <td class="px-6 py-4">
+                            <span class="font-mono font-bold text-slate-900 bg-amber-50 rounded px-2.5 py-1 border border-amber-200/60 inline-block">
+                                {{ novedad.codigo_barras_detectado }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-700">{{ novedad.cantidad }}</td>
+                        <td class="px-6 py-4 text-slate-500 font-medium">{{ novedad.usuario.username }}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{% url 'inventario:asociar_novedad' novedad.id %}" class="inline-flex items-center space-x-1 bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm">
+                                    <span>🔗</span> <span>Enlazar</span>
+                                </a>
+                                <a href="{% url 'inventario:crear_desde_novedad' novedad.id %}" class="inline-flex items-center space-x-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm">
+                                    <span>➕</span> <span>Crear Nuevo</span>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
+                            ¡Excelente! No hay novedades pendientes por resolver en este momento.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

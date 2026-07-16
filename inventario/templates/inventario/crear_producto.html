@@ -1,0 +1,43 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Nuevo Producto | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Registrar Nuevo Producto</h2>
+            <p class="text-sm text-slate-500 mt-1">Añada un nuevo artículo al maestro de inventario.</p>
+        </div>
+        <a href="{% url 'inventario:lista_productos' %}" class="text-sm font-bold text-slate-500 hover:text-slate-700 underline">
+            &larr; Volver a la lista
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 p-8">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            
+            <div>
+                <label for="{{ form.codigo_barras.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">Código de Barras</label>
+                {{ form.codigo_barras }}
+                <p class="text-xs text-slate-400 mt-1">Escanee o digite el código único del producto.</p>
+            </div>
+
+            <div>
+                <label for="{{ form.descripcion.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">Descripción del Artículo</label>
+                {{ form.descripcion }}
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                <a href="{% url 'inventario:lista_productos' %}" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-colors">
+                    💾 Guardar Producto
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,252 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Captura de Códigos | Boccherini{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Bloqueo visual y efectos interactivos específicos de las cajas de entrada */
+    .scanner-input:focus, .multiplier-input:focus {
+        outline: none;
+        border-color: #cda043;
+        box-shadow: 0 0 20px rgba(205, 160, 67, 0.35);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    
+    <div class="w-full bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+        
+        <div class="bg-slate-900 px-8 py-4 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-slate-400 text-xs font-mono uppercase tracking-widest">Terminal Activa</span>
+            </div>
+            <span class="text-boccherini-gold font-bold text-xs uppercase tracking-wider">
+                Sesión: {{ sesion.nombre|default:"Principal" }} (#{{ sesion.id }})
+            </span>
+        </div>
+
+        <div class="p-8 sm:p-10 space-y-8">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold text-boccherini-blue tracking-tight">Captura de Códigos</h2>
+                <p class="text-sm text-slate-500 max-w-md mx-auto">
+                    El sistema mantiene el foco de lectura activo. Posicione el lector láser sobre el código de barras del producto.
+                </p>
+            </div>
+
+            <!-- Contenedor adaptado con el Multiplicador de Cantidad al lado del Lector -->
+            <div class="flex items-center space-x-3 max-w-md mx-auto">
+                <div class="relative w-28 shrink-0">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cant.</span>
+                    <input type="number" 
+                           id="multiplicador" 
+                           value="1" 
+                           min="1"
+                           class="multiplier-input w-full pl-12 pr-3 py-4 text-center font-mono font-bold text-xl text-slate-800 bg-slate-50 border-2 border-slate-200 rounded-xl animacion-suave placeholder-slate-400">
+                </div>
+                
+                <div class="relative flex-1">
+                    <input type="text" 
+                           id="codigo" 
+                           placeholder="|||||| Esperando Lectura ||||||" 
+                           autocomplete="off" 
+                           autofocus
+                           class="scanner-input w-full px-6 py-4 text-center font-mono text-xl text-slate-800 bg-slate-50 border-2 border-slate-200 rounded-xl animacion-suave placeholder-slate-400 tracking-widest">
+                </div>
+            </div>
+
+            <div id="resultado" class="animacion-suave hidden max-w-md mx-auto rounded-xl p-4 border text-sm font-medium"></div>
+        </div>
+    </div>
+
+    <div class="w-full mt-8 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Últimas capturas en esta sesión</h3>
+            <span class="bg-amber-500/10 text-boccherini-gold text-[10px] font-bold px-2 py-0.5 rounded border border-boccherini-gold/20">Monitoreo en vivo</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-boccherini-blue uppercase text-[10px] tracking-wider font-bold border-b border-slate-200">
+                        <th class="px-6 py-3">Código de Barras</th>
+                        <th class="px-6 py-3">Descripción Producto</th>
+                        <th class="px-6 py-3 text-right">Cant. Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 text-sm text-slate-700" id="historial-rows">
+                    {% for item in recientes %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-3 font-mono text-xs font-semibold text-slate-500">{{ item.producto.codigo_barras }}</td>
+                        <td class="px-6 py-3 font-medium text-slate-800">{{ item.producto.descripcion }}</td>
+                        <td class="px-6 py-3 text-right font-bold text-boccherini-blue">{{ item.cantidad }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr id="fila-vacia">
+                        <td colspan="3" class="px-6 py-6 text-center text-slate-400 text-xs font-medium">
+                            No se han realizado escaneos en esta sesión todavía. ¡Dispara la pistola!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const inputCodigo = document.getElementById('codigo');
+    const inputMultiplicador = document.getElementById('multiplicador');
+    const divResultado = document.getElementById('resultado');
+    const tbodyHistorial = document.getElementById('historial-rows');
+
+    document.body.addEventListener('click', (e) => {
+        if (e.target !== inputMultiplicador) {
+            inputCodigo.focus();
+        }
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === '*' || e.key === '+') {
+            e.preventDefault();
+            inputMultiplicador.focus();
+            inputMultiplicador.select();
+        }
+    });
+
+    inputMultiplicador.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            inputCodigo.focus();
+        }
+    });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    inputCodigo.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); 
+            let codigo = inputCodigo.value.trim();
+            let cantidad = parseInt(inputMultiplicador.value) || 1;
+            
+            if (codigo !== '') {
+                procesarCodigo(codigo, cantidad);
+            }
+        }
+    });
+
+    function procesarCodigo(codigo, cantidad) {
+        fetch('/inventario/procesar-escaneo/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                'codigo_barras': codigo,
+                'sesion_id': "{{ sesion.id }}",
+                'cantidad': cantidad
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            divResultado.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-amber-50', 'text-amber-800', 'border-amber-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200');
+            
+            if (data.status === 'ok') {
+                divResultado.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+                // AQUÍ MUESTRO EL STOCK TEÓRICO EN EL RESULTADO
+                divResultado.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">✅</span>
+                        <div>
+                            <p class="font-bold">${data.message}</p>
+                            <p class="text-xs text-emerald-600 mt-0.5">
+                                Contado: <span class="font-bold">${data.cantidad}</span> 
+                                <span class="mx-2 text-emerald-400/50">|</span> 
+                                Esperado: <span class="font-bold">${data.stock_teorico}</span>
+                            </p>
+                        </div>
+                    </div>`;
+
+                const filaVacia = document.getElementById('fila-vacia');
+                if (filaVacia) filaVacia.remove();
+
+                let filaExistente = Array.from(tbodyHistorial.children).find(row => row.cells[0]?.textContent === data.codigo);
+
+                if (filaExistente) {
+                    filaExistente.cells[2].textContent = data.cantidad;
+                    filaExistente.className = "hover:bg-slate-50/50 transition-colors bg-amber-50 animate-pulse";
+                    tbodyHistorial.insertBefore(filaExistente, tbodyHistorial.firstChild);
+                    setTimeout(() => { filaExistente.className = "hover:bg-slate-50/50 transition-colors"; }, 1500);
+                } else {
+                    const nuevaFila = document.createElement('tr');
+                    nuevaFila.className = "hover:bg-slate-50/50 transition-colors bg-amber-50 animate-pulse";
+                    nuevaFila.innerHTML = `
+                        <td class="px-6 py-3 font-mono text-xs font-semibold text-slate-500">${data.codigo}</td>
+                        <td class="px-6 py-3 font-medium text-slate-800">${data.producto}</td>
+                        <td class="px-6 py-3 text-right font-bold text-boccherini-blue">${data.cantidad}</td>
+                    `;
+                    tbodyHistorial.insertBefore(nuevaFila, tbodyHistorial.firstChild);
+                    
+                    if (tbodyHistorial.children.length > 5) {
+                        tbodyHistorial.removeChild(tbodyHistorial.lastChild);
+                    }
+                    setTimeout(() => { nuevaFila.className = "hover:bg-slate-50/50 transition-colors"; }, 1500);
+                }
+
+            } else if (data.status === 'novedad') {
+                divResultado.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
+                divResultado.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">⚠️</span>
+                        <div>
+                            <p class="font-bold">Novedad registrada</p>
+                            <p class="text-xs text-amber-700 mt-0.5">${data.message}</p>
+                        </div>
+                    </div>`;
+            } else {
+                divResultado.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
+                divResultado.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-base">❌</span>
+                        <div>
+                            <p class="font-bold">Error del Servidor</p>
+                            <p class="text-xs text-rose-700 mt-0.5">${data.message}</p>
+                        </div>
+                    </div>`;
+            }
+            
+            inputCodigo.value = '';
+            inputMultiplicador.value = '1';
+            inputCodigo.focus();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            divResultado.classList.remove('hidden');
+            divResultado.className = 'animacion-suave max-w-md mx-auto rounded-xl p-4 border text-sm font-medium bg-rose-50 text-rose-800 border-rose-200';
+            divResultado.innerHTML = `❌ Error Crítico: No hay comunicación de red con Django.`;
+        });
+    }
+</script>
+{% endblock %}

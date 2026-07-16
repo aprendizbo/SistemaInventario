@@ -1,0 +1,71 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Registrar Operario | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-boccherini-blue px-6 py-4">
+            <h3 class="text-white font-bold text-lg">Registrar Nuevo Usuario</h3>
+            <p class="text-xs text-slate-300">Cree accesos para los operarios o administradores de la bodega.</p>
+        </div>
+
+        <div class="p-6">
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="p-3 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                    ⚠️ {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+
+                <div>
+                    <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Nombre de Usuario (Cédula o Código)</label>
+                    <input type="text" name="username" required placeholder="Ej: 1020455602 o operario_juan" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm font-semibold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Nombres</label>
+                        <input type="text" name="first_name" placeholder="Juan" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Apellidos</label>
+                        <input type="text" name="last_name" placeholder="Pérez" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Contraseña de Acceso</label>
+                    <input type="password" name="password" required placeholder="Mínimo 6 caracteres" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                </div>
+
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+                    <div>
+                        <span class="block text-sm font-bold text-slate-800">¿Asignar Rol Administrador?</span>
+                        <span class="text-xs text-slate-400">Tendrá accesos para gestionar inventarios, crear productos y configurar accesos.</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_staff" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-4 mt-6">
+                    <a href="{% url 'inventario:lista_usuarios' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md border-0 cursor-pointer">
+                        Registrar Cuenta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

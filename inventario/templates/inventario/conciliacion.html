@@ -1,0 +1,88 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Conciliación | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Conciliación de Inventario</h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Sesión: <span class="font-bold text-slate-700">{{ sesion.nombre }}</span> 
+                | Estado: 
+                <span class="font-bold {% if sesion.estado == 'CERRADA' %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                    {{ sesion.get_estado_display }}
+                </span>
+            </p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'inventario:panel_sesiones' %}" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-colors text-sm">
+                Volver
+            </a>
+            
+            {% if sesion.estado == 'ABIERTA' %}
+            <form action="{% url 'inventario:aplicar_ajuste' sesion.id %}" method="POST" onsubmit="return confirm('⚠️ ¿Estás seguro de APLICAR este inventario? Esto actualizará el stock maestro y cerrará la sesión de forma irreversible.');">
+                {% csrf_token %}
+                <button type="submit" class="inline-flex items-center space-x-2 bg-rose-600 hover:bg-rose-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-sm">
+                    <span>🔒</span> <span>Cerrar Sesión y Aplicar Stock</span>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Alertas Django -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl text-sm font-bold {% if message.tags == 'error' %}bg-rose-100 text-rose-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-800 text-white text-xs font-bold uppercase tracking-wider">
+                        <th class="px-6 py-4">Código</th>
+                        <th class="px-6 py-4">Producto</th>
+                        <th class="px-6 py-4 text-center bg-slate-700">Stock Sistema</th>
+                        <th class="px-6 py-4 text-center bg-slate-700">Físico Escaneado</th>
+                        <th class="px-6 py-4 text-center">Diferencia</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for item in resultados %}
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="px-6 py-4 font-mono font-bold text-slate-700">{{ item.producto.codigo_barras }}</td>
+                        <td class="px-6 py-4 text-slate-600">{{ item.producto.descripcion }}</td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-400">{{ item.stock_teorico }}</td>
+                        <td class="px-6 py-4 text-center font-bold text-boccherini-blue">{{ item.cantidad_escaneada }}</td>
+                        
+                        <td class="px-6 py-4 text-center font-bold">
+                            {% if item.diferencia > 0 %}
+                                <span class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+{{ item.diferencia }} (Sobra)</span>
+                            {% elif item.diferencia < 0 %}
+                                <span class="text-rose-600 bg-rose-50 px-2 py-1 rounded">{{ item.diferencia }} (Falta)</span>
+                            {% else %}
+                                <span class="text-slate-400">0 (OK)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
+                            No hay datos para conciliar. Verifica que haya stock o conteos registrados.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

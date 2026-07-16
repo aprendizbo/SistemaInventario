@@ -1,0 +1,73 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Crear Producto desde Novedad | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-boccherini-blue px-6 py-4">
+            <h3 class="text-white font-bold text-lg">Registrar Nuevo Producto Maestro</h3>
+            <p class="text-xs text-slate-300">Crea la ficha del producto usando el código huérfano detectado.</p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-sm">
+                <p class="text-slate-500 mb-1">Se asociará el conteo registrado de esta novedad:</p>
+                <div class="grid grid-cols-2 gap-2 font-medium text-slate-700">
+                    <div>Código Detectado: <span class="font-mono font-bold text-slate-900 bg-slate-200 px-1.5 py-0.5 rounded">{{ novedad.codigo_barras_detectado }}</span></div>
+                    <div>Cantidad Leída: <span class="font-bold text-boccherini-blue">{{ novedad.cantidad }} und.</span></div>
+                </div>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Código de Barras (No Editable)</label>
+                        <!-- Campo oculto para asegurar que viaje en el post -->
+                        <input type="hidden" name="codigo_barras" value="{{ novedad.codigo_barras_detectado }}">
+                        <input type="text" value="{{ novedad.codigo_barras_detectado }}" disabled class="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 text-sm font-mono font-bold text-slate-500 cursor-not-allowed">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Descripción del Producto</label>
+                        <input type="text" name="descripcion" required placeholder="Ej: VALVULA REGULADORA DE FLUJO 1/2" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Stock Teórico Inicial</label>
+                            <input type="number" name="stock_teorico" value="0" class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Rack</label>
+                            <input type="text" name="rack" placeholder="A, B, C..." class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Espacio</label>
+                            <input type="text" name="espacio" placeholder="01, 02..." class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 font-bold text-xs uppercase mb-1">Nivel</label>
+                            <input type="text" name="nivel" placeholder="01, 02..." class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-4 mt-6">
+                    <a href="{% url 'inventario:lista_novedades' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-colors shadow-md border-0 cursor-pointer">
+                        Crear y Sincronizar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
