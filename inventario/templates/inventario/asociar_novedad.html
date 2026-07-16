@@ -1,0 +1,47 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Enlazar Novedad | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-boccherini-blue px-6 py-4">
+            <h3 class="text-white font-bold text-lg">Enlazar Código de Barras</h3>
+            <p class="text-xs text-slate-300">Asocia un código leído no registrado a un producto ya existente.</p>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-sm">
+                <p class="text-slate-500 mb-1">Detalles de la captura:</p>
+                <div class="grid grid-cols-2 gap-2 font-medium text-slate-700">
+                    <div>Código Detectado: <span class="font-mono font-bold text-slate-900 bg-slate-200 px-1.5 py-0.5 rounded">{{ novedad.codigo_barras_detectado }}</span></div>
+                    <div>Cantidad Leída: <span class="font-bold text-boccherini-blue">{{ novedad.cantidad }} und.</span></div>
+                </div>
+            </div>
+
+            <form method="POST">
+                {% csrf_token %}
+                <div class="mb-6">
+                    <label class="block text-slate-700 font-bold text-sm mb-2">Seleccione el Producto Destino:</label>
+                    <select name="producto_id" required class="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-boccherini-blue text-slate-700 shadow-sm">
+                        <option value="">-- Seleccione un artículo del maestro --</option>
+                        {% for producto in productos %}
+                        <option value="{{ producto.id }}">{{ producto.descripcion }} (Código Actual: {{ producto.codigo_barras }})</option>
+                        {% endfor %}
+                    </select>
+                    <p class="text-xs text-slate-400 mt-3">💡 **Nota:** Al confirmar, el código de barras del producto seleccionado cambiará por el código huérfano y sus cantidades serán contabilizadas de inmediato en la sesión.</p>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 border-t border-slate-100 pt-4">
+                    <a href="{% url 'inventario:lista_novedades' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-sm transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-5 py-2 bg-boccherini-blue hover:bg-slate-800 text-white font-bold rounded-xl text-sm transition-colors shadow-md border-0 cursor-pointer">
+                        Confirmar y Enlazar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

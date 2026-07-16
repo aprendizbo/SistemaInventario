@@ -1,0 +1,145 @@
+{% extends 'inventario/base.html' %}
+
+{% block content %}
+<!-- Agregamos los estilos directamente aquí (puedes moverlos a tu archivo .css luego) -->
+<style>
+    .import-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+        background-color: #f4f6f9; /* Fondo gris muy claro para resaltar la tarjeta */
+        min-height: calc(100vh - 80px); /* Ajusta según el alto de tu navbar */
+    }
+
+    .import-card {
+        background: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 600px;
+        overflow: hidden;
+        border: 1px solid #e0e6ed;
+    }
+
+    .card-header {
+        background-color: #0b2240; /* Azul oscuro corporativo similar a tu navbar */
+        color: white;
+        padding: 20px 24px;
+        text-align: center;
+    }
+
+    .card-header h2 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 30px 24px;
+    }
+
+    .instructions {
+        color: #5c6873;
+        font-size: 14px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    /* Estilo del área de carga de archivo */
+    .file-drop-area {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        padding: 40px;
+        border: 2px dashed #aeb8c2;
+        border-radius: 8px;
+        background-color: #f8fafc;
+        transition: 0.3s;
+        cursor: pointer;
+        box-sizing: border-box;
+    }
+
+    .file-drop-area:hover {
+        background-color: #f0f4f8;
+        border-color: #0b2240;
+    }
+
+    .fake-btn {
+        background-color: #e2e8f0;
+        color: #334155;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        transition: 0.2s;
+    }
+
+    .file-msg {
+        font-size: 14px;
+        color: #64748b;
+    }
+
+    /* Ocultamos el input original sobre el área estilizada */
+    .file-input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 100%;
+        cursor: pointer;
+        opacity: 0;
+    }
+
+    /* Botón de acción principal */
+    .btn-submit {
+        display: block;
+        width: 100%;
+        background-color: #2563eb; /* Azul brillante para la llamada a la acción */
+        color: white;
+        border: none;
+        padding: 14px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 6px;
+        margin-top: 24px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-submit:hover {
+        background-color: #1d4ed8;
+    }
+</style>
+
+<div class="import-wrapper">
+    <div class="import-card">
+        <div class="card-header">
+            <h2>Importar Maestro de Productos</h2>
+        </div>
+        <div class="card-body">
+            <p class="instructions">
+                Sube el archivo en formato Excel (.xlsx, .xls) con la estructura requerida para actualizar el sistema de inventario.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="file-drop-area">
+                    <span class="fake-btn">Explorar archivos</span>
+                    <span class="file-msg" id="file-name">o arrastra tu documento aquí</span>
+                    <input class="file-input" type="file" name="archivo_excel" accept=".xlsx, .xls" required onchange="document.getElementById('file-name').textContent = this.files[0].name">
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    Subir y Procesar Archivo
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

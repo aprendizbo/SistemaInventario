@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | Boccherini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'boccherini-blue': '#001c40',
+                        'boccherini-gold': '#cda043',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Fondo elegante que combina con el azul corporativo */
+        .gradient-bg {
+            background: radial-gradient(circle at top right, #002b63 0%, #001c40 50%, #000c1f 100%);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4 font-sans antialiased text-slate-800">
+
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-white/10 overflow-hidden transform transition-all hover:shadow-boccherini-blue/50">
+        
+        <!-- Cabecera de Marca -->
+        <div class="bg-slate-50 px-8 py-10 text-center relative overflow-hidden border-b border-slate-200">
+            <!-- Logo Oficial -->
+            <div class="bg-white p-3 rounded-2xl shadow-md inline-block mb-4 border border-slate-100 relative z-10">
+                <img class="h-16 w-auto object-contain" src="https://boccherinicol.vtexassets.com/assets/vtex.file-manager-graphql/images/117104a7-a9bf-4a1c-ba2b-c33ac4db466e___dc9a4962633b58475c7995a25825a981.jpg" alt="Logo Boccherini">
+            </div>
+            <h1 class="text-boccherini-blue text-2xl font-black tracking-tight uppercase">Sistema de Inventario</h1>
+            <span class="text-boccherini-gold text-xs font-bold tracking-widest uppercase block mt-1">
+                Acceso Corporativo
+            </span>
+            
+            <!-- Brillo decorativo de fondo -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-boccherini-blue via-boccherini-gold to-boccherini-blue"></div>
+        </div>
+
+        <!-- Cuerpo del Formulario -->
+        <div class="p-8">
+            <p class="text-slate-500 text-sm text-center mb-6">Ingrese sus credenciales para acceder a los módulos de la bodega.</p>
+
+            <!-- Manejo de Errores de Django estilizado -->
+            {% if form.errors %}
+            <div class="mb-6 bg-rose-50 border-l-4 border-rose-500 p-4 rounded-r-xl shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <span class="text-rose-500 text-lg">⚠️</span>
+                    <p class="text-xs text-rose-800 font-bold">Usuario o contraseña incorrectos. Intente nuevamente.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-5">
+                {% csrf_token %}
+
+                <!-- Campo: Usuario / Cédula -->
+                <div>
+                    <label for="id_username" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        Nombre de Usuario
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-sm">
+                            👤
+                        </span>
+                        <input type="text" name="username" id="id_username" required
+                               placeholder="Ej: admin o 10204567"
+                               class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-boccherini-gold focus:border-transparent focus:bg-white text-sm transition-all text-slate-700 shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Campo: Contraseña -->
+                <div>
+                    <label for="id_password" class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
+                        Contraseña
+                    </label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-sm">
+                            🔑
+                        </span>
+                        <input type="password" name="password" id="id_password" required
+                               placeholder="••••••••"
+                               class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-boccherini-gold focus:border-transparent focus:bg-white text-sm transition-all text-slate-700 shadow-sm">
+                    </div>
+                </div>
+
+                <!-- Botón de Ingreso -->
+                <button type="submit" 
+                        class="w-full bg-boccherini-blue text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-boccherini-blue/30 hover:bg-[#001430] hover:shadow-boccherini-blue/50 transform active:scale-[0.98] transition-all text-sm uppercase tracking-wider cursor-pointer mt-4 border border-boccherini-blue">
+                    Ingresar al Sistema &rarr;
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer Corporativo -->
+        <div class="bg-slate-50 px-8 py-4 text-center border-t border-slate-100">
+            <p class="text-[10px] text-slate-400 font-medium">
+                &copy; 2026 Boccherini S.A.S. &bull; Módulo Protegido.
+            </p>
+        </div>
+    </div>
+
+</body>
+</html>

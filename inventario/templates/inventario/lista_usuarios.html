@@ -1,0 +1,126 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Usuarios y Accesos | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Control de Usuarios y Accesos</h2>
+            <p class="text-sm text-slate-500 mt-1">Gestione las cuentas y contraseñas de los operarios de la bodega.</p>
+        </div>
+        <div>
+            <a href="{% url 'inventario:crear_usuario' %}" class="inline-flex items-center space-x-1 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl shadow-md animacion-suave border-0 cursor-pointer">
+                <span>➕</span> <span>Registrar Operario</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mensajes de Alerta -->
+    {% if messages %}
+    <div class="mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
+            <span>{% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}</span>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+        <div class="bg-slate-800 px-6 py-4">
+            <h3 class="text-white font-bold text-base tracking-wide">Cuentas de Usuarios Registradas</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        <th class="px-6 py-4">Usuario</th>
+                        <th class="px-6 py-4">Nombre Completo</th>
+                        <th class="px-6 py-4">Rol</th>
+                        <th class="px-6 py-4 text-center">Estado de Acceso</th>
+                        <th class="px-6 py-4 text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for u in usuarios %}
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600 uppercase">
+                                    {{ u.username|slice:":2" }}
+                                </div>
+                                <span class="font-bold text-slate-900">{{ u.username }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600 font-medium">
+                            {{ u.first_name }} {{ u.last_name|default:"" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if u.is_staff %}
+                            <span class="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                                Administrador / TI
+                            </span>
+                            {% else %}
+                            <span class="bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+                                Operario / Auditor
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <!-- Corrección: Uso de atributos data-* -->
+                                <input type="checkbox" {% if u.is_active %}checked{% endif %} 
+                                       class="sr-only peer" 
+                                       data-url="{% url 'inventario:toggle_usuario' u.id %}"
+                                       data-username="{{ u.username }}"
+                                       onchange="toggleEstadoUsuario(this)"
+                                       {% if u == request.user %}disabled{% endif %}>
+                                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500 {% if u == request.user %}opacity-50 cursor-not-allowed{% endif %}"></div>
+                            </label>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{% url 'inventario:cambiar_password_usuario' u.id %}" class="inline-flex items-center space-x-1 bg-slate-800 hover:bg-slate-900 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition-colors shadow-sm" title="Cambiar Contraseña">
+                                <span>🔑</span> <span>Restablecer Clave</span>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Lógica AJAX para cambiar el estado en caliente -->
+<script>
+function toggleEstadoUsuario(element) {
+    // Extraemos los datos directamente del elemento HTML
+    const url = element.getAttribute('data-url');
+    const username = element.getAttribute('data-username');
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'ok') {
+            alert(data.message);
+        } else {
+            alert("Error: " + data.message);
+            element.checked = !element.checked; // Revierte el check si hubo error
+        }
+    })
+    .catch(error => {
+        alert("Ocurrió un error de red al procesar la solicitud.");
+        element.checked = !element.checked;
+    });
+}
+</script>
+{% endblock %}
