@@ -23,7 +23,10 @@ class Producto(models.Model):
 
     # MÉTODO ADAPTADO: Calcula la diferencia contra una sesión específica
     def get_variacion(self, sesion_id):
-        total_contado = self.conteos.filter(sesion_id=sesion_id).aggregate(Sum('amount'))['cantidad__sum'] or 0
+        total_contado = self.conteos.filter(sesion_id=sesion_id).aggregate(
+            Sum('cantidad')
+        )['cantidad__sum'] or 0
+
         return total_contado - self.stock_teorico
 
 

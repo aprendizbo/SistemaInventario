@@ -39,7 +39,7 @@
                 </p>
             </div>
 
-            <!-- Contenedor adaptado con el Multiplicador de Cantidad al lado del Lector -->
+            <!-- Contenedor con Multiplicador y Lector -->
             <div class="flex items-center space-x-3 max-w-md mx-auto">
                 <div class="relative w-28 shrink-0">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cant.</span>
@@ -60,10 +60,168 @@
                 </div>
             </div>
 
+            <!-- Alerta de resultado principal -->
             <div id="resultado" class="animacion-suave hidden max-w-md mx-auto rounded-xl p-4 border text-sm font-medium"></div>
+
+            <!-- NUEVO: Panel de Último Producto Escaneado -->
+            <div id="ultimo-producto" class="hidden max-w-md mx-auto rounded-xl p-5 border border-slate-200 bg-slate-50 shadow-sm mt-4">
+                <h3 class="font-extrabold text-boccherini-blue mb-4 border-b pb-2">
+                    Último Producto Escaneado
+                </h3>
+            
+                <div class="grid grid-cols-2 gap-y-2 text-sm">
+                    <p><strong>Código:</strong></p>
+                    <p id="up-codigo" class="text-right font-mono">-</p>
+            
+                    <p><strong>Descripción:</strong></p>
+                    <p id="up-descripcion" class="text-right font-bold">-</p>
+            
+                    <p><strong>Rack:</strong></p>
+                    <p id="up-rack" class="text-right">-</p>
+            
+                    <p><strong>Espacio:</strong></p>
+                    <p id="up-espacio" class="text-right">-</p>
+            
+                    <p><strong>Nivel:</strong></p>
+                    <p id="up-nivel" class="text-right">-</p>
+            
+                    <hr class="col-span-2">
+            
+                    <p><strong>Stock Teórico:</strong></p>
+                    <p id="up-stock" class="text-right">-</p>
+            
+                    <p><strong>Contado:</strong></p>
+                    <p id="up-contado" class="text-right">-</p>
+            
+                    <p><strong>Diferencia:</strong></p>
+                    <p id="up-diferencia" class="text-right font-bold">-</p>
+            
+                    <p><strong>Estado:</strong></p>
+                    <p id="up-estado" class="text-right font-bold">-</p>
+                </div>
+            </div>
+
         </div>
     </div>
 
+    <!-- Historial de capturas -->
+    <div class="w-full mt-8 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Últimas capturas en esta sesión</h3>
+            <span class="bg-amber-500/10 text-boccherini-gold text-[10px] font-bold px-2 py-0.5 rounded border border-boccherini-gold/20">Monitoreo en vivo</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-Aquí tienes el código completo con las nuevas estructuras, identificadores y la lógica de validación de estado (Exacto, Sobrante, Faltante) tal como los solicitaste.
+
+```html
+{% extends 'inventario/base.html' %}
+
+{% block title %}Captura de Códigos | Boccherini{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Bloqueo visual y efectos interactivos específicos de las cajas de entrada */
+    .scanner-input:focus, .multiplier-input:focus {
+        outline: none;
+        border-color: #cda043;
+        box-shadow: 0 0 20px rgba(205, 160, 67, 0.35);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    
+    <div class="w-full bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+        
+        <div class="bg-slate-900 px-8 py-4 flex items-center justify-between border-b border-slate-800">
+            <div class="flex items-center space-x-2">
+                <span class="flex h-3 w-3 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-slate-400 text-xs font-mono uppercase tracking-widest">Terminal Activa</span>
+            </div>
+            <span class="text-boccherini-gold font-bold text-xs uppercase tracking-wider">
+                Sesión: {{ sesion.nombre|default:"Principal" }} (#{{ sesion.id }})
+            </span>
+        </div>
+
+        <div class="p-8 sm:p-10 space-y-8">
+            <div class="text-center space-y-2">
+                <h2 class="text-2xl font-bold text-boccherini-blue tracking-tight">Captura de Códigos</h2>
+                <p class="text-sm text-slate-500 max-w-md mx-auto">
+                    El sistema mantiene el foco de lectura activo. Posicione el lector láser sobre el código de barras del producto.
+                </p>
+            </div>
+
+            <!-- Contenedor con Multiplicador y Lector -->
+            <div class="flex items-center space-x-3 max-w-md mx-auto">
+                <div class="relative w-28 shrink-0">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Cant.</span>
+                    <input type="number" 
+                           id="multiplicador" 
+                           value="1" 
+                           min="1"
+                           class="multiplier-input w-full pl-12 pr-3 py-4 text-center font-mono font-bold text-xl text-slate-800 bg-slate-50 border-2 border-slate-200 rounded-xl animacion-suave placeholder-slate-400">
+                </div>
+                
+                <div class="relative flex-1">
+                    <input type="text" 
+                           id="codigo" 
+                           placeholder="|||||| Esperando Lectura ||||||" 
+                           autocomplete="off" 
+                           autofocus
+                           class="scanner-input w-full px-6 py-4 text-center font-mono text-xl text-slate-800 bg-slate-50 border-2 border-slate-200 rounded-xl animacion-suave placeholder-slate-400 tracking-widest">
+                </div>
+            </div>
+
+            <!-- Alerta de resultado principal -->
+            <div id="resultado" class="animacion-suave hidden max-w-md mx-auto rounded-xl p-4 border text-sm font-medium"></div>
+
+            <div id="ultimo-producto" class="hidden max-w-md mx-auto rounded-xl p-5 border border-slate-200 bg-slate-50 shadow-sm mt-4">
+                <h3 class="font-extrabold text-boccherini-blue mb-4 border-b pb-2">
+                    Último Producto Escaneado
+                </h3>
+                
+                <div class="grid grid-cols-2 gap-y-2 text-sm">
+                    <p><strong>Código:</strong></p>
+                    <p id="up-codigo" class="text-right font-mono">-</p>
+                    
+                    <p><strong>Descripción:</strong></p>
+                    <p id="up-descripcion" class="text-right font-bold">-</p>
+                    
+                    <p><strong>Rack:</strong></p>
+                    <p id="up-rack" class="text-right">-</p>
+                    
+                    <p><strong>Espacio:</strong></p>
+                    <p id="up-espacio" class="text-right">-</p>
+                    
+                    <p><strong>Nivel:</strong></p>
+                    <p id="up-nivel" class="text-right">-</p>
+                    
+                    <hr class="col-span-2">
+                    
+                    <p><strong>Stock Teórico:</strong></p>
+                    <p id="up-stock" class="text-right">-</p>
+                    
+                    <p><strong>Contado:</strong></p>
+                    <p id="up-contado" class="text-right">-</p>
+                    
+                    <p><strong>Diferencia:</strong></p>
+                    <p id="up-diferencia" class="text-right font-bold">-</p>
+                    
+                    <p><strong>Estado:</strong></p>
+                    <p id="up-estado" class="text-right font-bold">-</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Historial de capturas -->
     <div class="w-full mt-8 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
         <div class="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
             <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Últimas capturas en esta sesión</h3>
@@ -106,6 +264,7 @@
     const inputMultiplicador = document.getElementById('multiplicador');
     const divResultado = document.getElementById('resultado');
     const tbodyHistorial = document.getElementById('historial-rows');
+    const panelUltimoProducto = document.getElementById('ultimo-producto');
 
     document.body.addEventListener('click', (e) => {
         if (e.target !== inputMultiplicador) {
@@ -175,7 +334,6 @@
             
             if (data.status === 'ok') {
                 divResultado.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
-                // AQUÍ MUESTRO EL STOCK TEÓRICO EN EL RESULTADO
                 divResultado.innerHTML = `
                     <div class="flex items-center space-x-2">
                         <span class="text-base">✅</span>
@@ -188,6 +346,36 @@
                             </p>
                         </div>
                     </div>`;
+
+                panelUltimoProducto.classList.remove('hidden');
+                document.getElementById('up-codigo').innerText = data.codigo || '-';
+                document.getElementById('up-descripcion').innerText = data.producto || '-';
+                document.getElementById('up-rack').innerText = data.rack || '-';
+                document.getElementById('up-espacio').innerText = data.espacio || '-';
+                document.getElementById('up-nivel').innerText = data.nivel || '-';
+                
+                let stockTeorico = parseInt(data.stock_teorico || 0);
+                let cantContada = parseInt(data.cantidad || 0);
+                let diferencia = cantContada - stockTeorico;
+                
+                document.getElementById('up-stock').innerText = stockTeorico;
+                document.getElementById('up-contado').innerText = cantContada;
+                
+                const diferenciaSpan = document.getElementById('up-diferencia');
+                const estadoSpan = document.getElementById('up-estado');
+                
+                diferenciaSpan.innerText = diferencia;
+                
+                if (diferencia === 0) {
+                    diferenciaSpan.className = "text-right font-bold text-emerald-600";
+                    estadoSpan.innerHTML = "🟢 EXACTO";
+                } else if (diferencia > 0) {
+                    diferenciaSpan.className = "text-right font-bold text-blue-600";
+                    estadoSpan.innerHTML = "🔵 SOBRANTE";
+                } else {
+                    diferenciaSpan.className = "text-right font-bold text-red-600";
+                    estadoSpan.innerHTML = "🔴 FALTANTE";
+                }
 
                 const filaVacia = document.getElementById('fila-vacia');
                 if (filaVacia) filaVacia.remove();
@@ -248,5 +436,12 @@
             divResultado.innerHTML = `❌ Error Crítico: No hay comunicación de red con Django.`;
         });
     }
+
+    // Mantener foco permanente PDA
+    setInterval(() => {
+        if (document.activeElement !== inputMultiplicador) {
+            inputCodigo.focus();
+        }
+    }, 1000);
 </script>
 {% endblock %}
