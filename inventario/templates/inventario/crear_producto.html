@@ -18,15 +18,120 @@
         <form method="POST" class="space-y-6">
             {% csrf_token %}
             
+            <!-- === BLOQUE DE ALERTA PARA ERRORES === -->
+            {% if form.errors %}
+            <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl text-sm text-red-700">
+                <p class="font-bold flex items-center gap-1.5">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    Por favor corrige los siguientes errores:
+                </p>
+                <ul class="list-disc pl-5 mt-2 space-y-1">
+                    {% for field in form %}
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Campo: Código de Barras -->
             <div>
                 <label for="{{ form.codigo_barras.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">Código de Barras</label>
                 {{ form.codigo_barras }}
-                <p class="text-xs text-slate-400 mt-1">Escanee o digite el código único del producto.</p>
+                
+                {% if form.codigo_barras.errors %}
+                    {% for error in form.codigo_barras.errors %}
+                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
+                            ⚠️ {{ error }}
+                        </p>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-slate-400 mt-1">Escanee o digite el código único del producto.</p>
+                {% endif %}
             </div>
 
+            <!-- Campo: Descripción -->
             <div>
                 <label for="{{ form.descripcion.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">Descripción del Artículo</label>
                 {{ form.descripcion }}
+                
+                {% if form.descripcion.errors %}
+                    {% for error in form.descripcion.errors %}
+                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
+                            ⚠️ {{ error }}
+                        </p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Campo: Stock Teórico -->
+            <div>
+                <label for="{{ form.stock_teorico.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
+                    Stock Teórico
+                </label>
+                {{ form.stock_teorico }}
+                
+                {% if form.stock_teorico.errors %}
+                    {% for error in form.stock_teorico.errors %}
+                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
+                            ⚠️ {{ error }}
+                        </p>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-slate-400 mt-1">
+                        Cantidad esperada en inventario.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- Ubicación -->
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label for="{{ form.rack.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
+                        Rack
+                    </label>
+                    {{ form.rack }}
+                    
+                    {% if form.rack.errors %}
+                        {% for error in form.rack.errors %}
+                            <p class="text-xs text-red-600 font-semibold mt-1.5">⚠️ {{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.espacio.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
+                        Espacio
+                    </label>
+                    {{ form.espacio }}
+                    
+                    {% if form.espacio.errors %}
+                        {% for error in form.espacio.errors %}
+                            <p class="text-xs text-red-600 font-semibold mt-1.5">⚠️ {{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.nivel.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
+                        Nivel
+                    </label>
+                    {{ form.nivel }}
+                    
+                    {% if form.nivel.errors %}
+                        {% for error in form.nivel.errors %}
+                            <p class="text-xs text-red-600 font-semibold mt-1.5">⚠️ {{ error }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
             </div>
 
             <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">

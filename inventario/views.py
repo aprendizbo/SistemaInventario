@@ -1,5 +1,6 @@
 import json
 import csv
+import pandas as pd
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
@@ -114,7 +115,15 @@ def procesar_escaneo(request):
     sesion = get_object_or_404(SesionInventario, id=sesion_id, estado='ABIERTA')
 
     try:
-        producto = Producto.objects.get(codigo_barras=codigo)
+        # AGREGADO: Try/Except robusto para la consulta del escáner
+        try:
+            producto = Producto.objects.get(codigo_barras=codigo)
+        except Producto.MultipleObjectsReturned:
+            print(f"ERROR ESCANEO: Múltiples productos con el código [{codigo}]. Revisa tu Base de Datos.")
+            return JsonResponse({'status': 'error', 'message': f'Error: Códigos duplicados para [{codigo}]'}, status=400)
+        except Exception as e:
+            print(f"ERROR ESCANEO INESPERADO [{codigo}]: {e}")
+            raise e # Relanza para que sea capturado por la lógica de 'DoesNotExist' si es el caso
 
         conteo, created = ConteoDetalle.objects.get_or_create(
             sesion=sesion,
@@ -127,6 +136,7 @@ def procesar_escaneo(request):
             ConteoDetalle.objects.filter(id=conteo.id).update(cantidad=F('cantidad') + cantidad_ingresada)
             conteo.refresh_from_db()
 
+        # AQUÍ SE APLICÓ EL CAMBIO 2 (Retorno con rack, espacio, nivel y diferencia)
         return JsonResponse({
             'status': 'ok',
             'tipo': 'conteo',
@@ -134,7 +144,11 @@ def procesar_escaneo(request):
             'producto': producto.descripcion,
             'cantidad': conteo.cantidad,
             'codigo': producto.codigo_barras,
-            'stock_teorico': producto.stock_teorico 
+            'stock_teorico': producto.stock_teorico,
+            'rack': producto.rack,
+            'espacio': producto.espacio,
+            'nivel': producto.nivel,
+            'diferencia': conteo.cantidad - producto.stock_teorico,
         })
 
     except Producto.DoesNotExist:
@@ -185,31 +199,125 @@ def lista_productos(request):
         'query': query
     })
 
+
 @login_required
 def importar_productos(request):
-    """Vista para cargar el maestro de productos masivamente desde un archivo Excel/CSV."""
+    """Vista para cargar el maestro de productos masivamente desde un archivo Excel usando Pandas."""
     if request.method == 'POST' and request.FILES.get('archivo_excel'):
-        producto_resource = ProductoResource()
-        dataset = Dataset()
-        new_products = request.FILES['archivo_excel']
+        excel_file = request.FILES['archivo_excel']
 
-        imported_data = dataset.load(new_products.read(), format='xlsx') 
-        result = producto_resource.import_data(dataset, dry_run=False)
-        
-        if not result.has_errors():
+        try:
+            # Leer el archivo Excel usando pandas
+            df = pd.read_excel(excel_file)
+            
+            # --- CAMBIO APLICADO AQUÍ (Prints y Try/Except para depurar Excel) ---
+            print(df.columns.tolist())
+            try:
+                print(df[['Código de barras', 'Descripción']].head())
+            except KeyError as e:
+                print(f"Error de columnas al intentar imprimir head(): {e}")
+            # ---------------------------------------------------------------------
+
+            # Rellenar valores nulos (NaN) adaptados a los nuevos nombres de columnas
+            df = df.fillna({
+                'Código de barras': '',
+                'Descripción': 'Sin descripción',
+                'Cantidad': 0,
+                'Almacén': '',
+                'Ubicación de almacenaje': ''
+            })
+
+            productos_crear = []
+            productos_actualizar = []
+            
+            # Obtenemos los códigos que ya existen en la DB para saber si actualizamos o creamos
+            codigos_db = set(Producto.objects.values_list('codigo_barras', flat=True))
+            
+            for index, row in df.iterrows():
+                codigo = str(row.get('Código de barras', '')).strip()
+                if codigo.endswith('.0'):
+                    codigo = codigo[:-2]
+                print(f"Buscando código: [{codigo}]")
+                print(type(row.get('Código de barras')))
+                
+                # Omitir filas vacías o con códigos inválidos
+                if not codigo or codigo.lower() == 'nan':
+                    continue  
+
+                descripcion = str(row.get('Descripción', '')).strip()
+                stock = row.get('Cantidad', 0)
+                rack = str(row.get('Almacén', '')).strip()
+                espacio = str(row.get('Ubicación de almacenaje', '')).strip()
+                nivel = ''
+                
+                # Limpiar cadenas vacías que pandas convierte a string 'nan'
+                rack = rack if rack.lower() != 'nan' else None
+                espacio = espacio if espacio.lower() != 'nan' else None
+                nivel = nivel if nivel.lower() != 'nan' else None
+
+                try:
+                    stock = int(stock)
+                except (ValueError, TypeError):
+                    stock = 0
+
+                # --- CAMBIO APLICADO AQUÍ (Try-Except para Existencia) ---
+                if codigo in codigos_db:
+                    try:
+                        prod = Producto.objects.get(codigo_barras=codigo)
+
+                        prod.descripcion = descripcion
+                        prod.stock_teorico = stock
+                        prod.rack = rack
+                        prod.espacio = espacio
+                        prod.nivel = nivel
+
+                        productos_actualizar.append(prod)
+
+                    except Producto.DoesNotExist:
+                        print(f"NO EXISTE EN BD: [{codigo}]")
+                    except Producto.MultipleObjectsReturned:
+                        print(f"ERROR: Se encontraron MÚLTIPLES productos con el código [{codigo}].")
+                    except Exception as e:
+                        print(f"ERROR INESPERADO con el código [{codigo}]: {e}")
+                # ---------------------------------------------------------
+                else:
+                    # Preparar para crear un nuevo producto
+                    productos_crear.append(Producto(
+                        codigo_barras=codigo,
+                        descripcion=descripcion,
+                        stock_teorico=stock,
+                        rack=rack,
+                        espacio=espacio,
+                        nivel=nivel
+                    ))
+                    codigos_db.add(codigo) # Evitamos duplicados dentro del mismo Excel
+
+            # Ejecutamos las operaciones en bloque (Bulk) para rendimiento óptimo
+            if productos_crear:
+                Producto.objects.bulk_create(productos_crear)
+            
+            if productos_actualizar:
+                Producto.objects.bulk_update(
+                    productos_actualizar, 
+                    ['descripcion', 'stock_teorico', 'rack', 'espacio', 'nivel']
+                )
+
             # AUDITORÍA
             LogAuditoria.objects.create(
                 usuario=request.user, accion='IMPORTAR', modelo='Producto',
-                descripcion=f"Importación masiva exitosa. Filas procesadas: {len(dataset)}", 
+                descripcion=f"Importación Excel (Pandas) exitosa. Creados: {len(productos_crear)}, Actualizados: {len(productos_actualizar)}", 
                 ip_direccion=get_client_ip(request)
             )
-            messages.success(request, "Productos importados correctamente.")
-        else:
-            messages.error(request, "Error al importar el archivo. Verifica el formato y las columnas.")
+            
+            messages.success(request, f"Importación correcta: {len(productos_crear)} creados y {len(productos_actualizar)} actualizados.")
+
+        except Exception as e:
+            messages.error(request, f"Error al procesar el archivo Excel: {str(e)}. Verifica que los nombres de las columnas coincidan.")
             
         return redirect('inventario:lista_productos')
         
     return render(request, 'inventario/importar_productos.html')
+
 
 @login_required
 def exportar_excel(request):
@@ -252,6 +360,9 @@ def crear_producto(request):
             )
             
             return redirect('inventario:lista_productos')
+        else:
+            # === AGREGA ESTO PARA DEPURAR ===
+            print("❌ ERRORES DEL FORMULARIO:", form.errors)
     else:
         form = ProductoForm()
     
@@ -566,6 +677,7 @@ def toggle_usuario(request, user_id):
         'message': f"El usuario '{usuario_afectado.username}' ahora está {estado_str}."
     })
 
+
 @login_required
 def historial_auditoria(request):
     """Muestra el historial de logs del sistema."""
@@ -573,8 +685,6 @@ def historial_auditoria(request):
         messages.error(request, "Acceso denegado.")
         return redirect('inventario:panel_sesiones')
     
-    # Asumiendo que tu modelo se llama LogAuditoria. 
-    # Ajusta el nombre si tu modelo tiene otro nombre.
     logs = LogAuditoria.objects.all().order_by('-id') 
     
     return render(request, 'inventario/auditoria.html', {'logs': logs})
