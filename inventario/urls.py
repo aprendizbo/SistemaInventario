@@ -22,6 +22,7 @@ urlpatterns = [
     # ==========================================
     path('sesiones/crear/', views.crear_sesion, name='crear_sesion'),
     path('sesiones/cerrar/<int:sesion_id>/', views.cerrar_sesion, name='cerrar_sesion'),
+    path('sesiones/eliminar/<int:sesion_id>/', views.eliminar_sesion, name='eliminar_sesion'),
     
     # ==========================================
     # ADMINISTRACIÓN PROPIA (CRUD, Sincronizaciones y Auditoría)

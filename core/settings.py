@@ -13,7 +13,8 @@ if not SECRET_KEY:
     raise ValueError("Jefe, la SECRET_KEY no está configurada en las variables de entorno.")
 
 # 2. DEBUG: Solo True si lo especificas en el .env, por defecto es False.
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True  # Modificado temporalmente para depurar y ver el error real
 
 # 3. ALLOWED_HOSTS: Lista permitida.
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1').split(',')

@@ -1,7 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.db.models import Sum
-from import_export import resources
+from import_export import resources, fields
+from import_export.widgets import ForeignKeyWidget
 
 # =====================================================================
 # 1. MODELO PRODUCTO
@@ -11,15 +12,20 @@ class Producto(models.Model):
     descripcion = models.CharField(max_length=255, help_text="Nombre o descripción del producto")
     stock_teorico = models.PositiveIntegerField(default=0, help_text="Cantidad esperada en sistema")
     
-    # ZONIFICACIÓN
-    rack = models.CharField(max_length=20, blank=True, null=True, help_text="Ej: Rack 01")
-    espacio = models.CharField(max_length=20, blank=True, null=True, help_text="Ej: A1")
-    nivel = models.CharField(max_length=20, blank=True, null=True, help_text="Ej: 01, 02")
+    # ZONIFICACIÓN (Actualizado para usar llave foránea)
+    ubicacion = models.ForeignKey(
+        'Ubicacion', 
+        on_delete=models.SET_NULL, 
+        blank=True, 
+        null=True, 
+        related_name='productos',
+        help_text="Ubicación física del producto"
+    )
 
     def __str__(self):
-        # Incluimos la ubicación en la representación del objeto
-        ubicacion = f"{self.rack}-{self.espacio}-{self.nivel}" if (self.rack or self.espacio or self.nivel) else "Sin ubicación"
-        return f"{self.codigo_barras} | {self.descripcion} | {ubicacion}"
+        # Leemos la representación de la ubicación desde el modelo relacionado
+        ubicacion_str = str(self.ubicacion) if self.ubicacion else "Sin ubicación"
+        return f"{self.codigo_barras} | {self.descripcion} | {ubicacion_str}"
 
     # MÉTODO ADAPTADO: Calcula la diferencia contra una sesión específica
     def get_variacion(self, sesion_id):
@@ -28,6 +34,26 @@ class Producto(models.Model):
         )['cantidad__sum'] or 0
 
         return total_contado - self.stock_teorico
+
+
+# =====================================================================
+# UBICACIONES FÍSICAS
+# =====================================================================
+class Ubicacion(models.Model):
+    codigo_barras = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Código de barras de la ubicación"
+    )
+
+    rack = models.CharField(max_length=50)
+    espacio = models.CharField(max_length=100)
+    nivel = models.CharField(max_length=50)
+
+    activa = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.rack} / {self.espacio} / {self.nivel}"
 
 
 # =====================================================================
@@ -127,7 +153,14 @@ class LogAuditoria(models.Model):
 # 4. CONFIGURACIÓN DE IMPORTACIÓN / EXPORTACIÓN
 # =====================================================================
 class ProductoResource(resources.ModelResource):
+    # Esto permite importar/exportar la ubicación usando su código de barras desde un archivo Excel/CSV
+    ubicacion = fields.Field(
+        column_name='ubicacion',
+        attribute='ubicacion',
+        widget=ForeignKeyWidget(Ubicacion, field='codigo_barras')
+    )
+
     class Meta:
         model = Producto
-        fields = ('codigo_barras', 'descripcion', 'stock_teorico', 'rack', 'espacio', 'nivel')
+        fields = ('codigo_barras', 'descripcion', 'stock_teorico', 'ubicacion')
         import_id_fields = ('codigo_barras',)

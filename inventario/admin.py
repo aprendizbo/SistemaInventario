@@ -1,24 +1,72 @@
 from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-from .models import Producto, SesionInventario, ConteoDetalle, Novedad
+from .models import (
+    Producto,
+    Ubicacion,
+    SesionInventario,
+    ConteoDetalle,
+    Novedad
+)
 
 # 1. Definimos el recurso para tener control total de los campos exportados
 class ProductoResource(resources.ModelResource):
     class Meta:
         model = Producto
-        # Define aquí los campos que quieres incluir en el Excel/CSV
-        fields = ('codigo_barras', 'descripcion', 'stock_teorico', 'rack', 'espacio', 'nivel')
-        export_order = ('codigo_barras', 'descripcion', 'stock_teorico', 'rack', 'espacio', 'nivel')
+        fields = ('codigo_barras', 'descripcion', 'stock_teorico', 'ubicacion')
+        export_order = ('codigo_barras', 'descripcion', 'stock_teorico', 'ubicacion')
 
 @admin.register(Producto)
 class ProductoAdmin(ImportExportModelAdmin):
-    resource_class = ProductoResource  # Vinculamos el recurso
-    
-    list_display = ('codigo_barras', 'descripcion', 'stock_teorico', 'rack', 'espacio', 'nivel')
-    list_filter = ('rack',) 
-    search_fields = ('codigo_barras', 'descripcion', 'rack')
-    ordering = ('rack', 'espacio', 'nivel')
+    resource_class = ProductoResource
+
+    list_display = (
+        'codigo_barras',
+        'descripcion',
+        'stock_teorico',
+        'ubicacion'
+    )
+
+    search_fields = (
+        'codigo_barras',
+        'descripcion',
+        'ubicacion__rack',
+        'ubicacion__espacio',
+        'ubicacion__nivel'
+    )
+
+    list_filter = (
+        'ubicacion',
+    )
+
+@admin.register(Ubicacion)
+class UbicacionAdmin(admin.ModelAdmin):
+    list_display = (
+        'codigo_barras',
+        'rack',
+        'espacio',
+        'nivel',
+        'activa'
+    )
+
+    list_filter = (
+        'rack',
+        'nivel',
+        'activa'
+    )
+
+    search_fields = (
+        'codigo_barras',
+        'rack',
+        'espacio',
+        'nivel'
+    )
+
+    ordering = (
+        'rack',
+        'espacio',
+        'nivel'
+    )
 
 @admin.register(SesionInventario)
 class SesionInventarioAdmin(admin.ModelAdmin):

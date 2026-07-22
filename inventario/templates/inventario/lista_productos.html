@@ -40,7 +40,7 @@
                     🔍
                 </div>
                 <input type="text" name="q" value="{{ query }}" placeholder="Buscar por descripción o código..." 
-                       class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm transition-all text-slate-700 shadow-sm">
+                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm transition-all text-slate-700 shadow-sm">
             </div>
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm">
                 Buscar
@@ -82,11 +82,15 @@
                         <td class="px-6 py-4 text-center font-bold text-blue-800">{{ producto.stock_teorico }}</td>
                         <td class="px-6 py-4 text-center">
                             <span class="inline-flex items-center space-x-1 bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-600 border border-slate-200">
-                                <span>{{ producto.rack|default:"--" }}</span>
-                                <span class="text-slate-300">/</span>
-                                <span>{{ producto.espacio|default:"--" }}</span>
-                                <span class="text-slate-300">/</span>
-                                <span>{{ producto.nivel|default:"--" }}</span>
+                                {% if producto.ubicacion %}
+                                    <span>{{ producto.ubicacion.rack }}</span>
+                                    <span class="text-slate-300">/</span>
+                                    <span>{{ producto.ubicacion.espacio }}</span>
+                                    <span class="text-slate-300">/</span>
+                                    <span>{{ producto.ubicacion.nivel }}</span>
+                                {% else %}
+                                    <span>Sin ubicación</span>
+                                {% endif %}
                             </span>
                         </td>
                     </tr>
@@ -112,24 +116,39 @@
             </div>
             <div>
                 <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    
                     {% if page_obj.has_previous %}
-                        <a href="?page=1{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center rounded-l-md px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">&laquo; Primera</a>
-                        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">Anterior</a>
-                    {% else %}
-                        <span class="relative inline-flex items-center rounded-l-md px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">&laquo; Primera</span>
-                        <span class="relative inline-flex items-center px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">Anterior</span>
+                        <a href="?page=1{% if query %}&q={{ query }}{% endif %}"
+                           class="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                            &laquo; Primera
+                        </a>
+
+                        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
+                           class="relative inline-flex items-center px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                            Anterior
+                        </a>
                     {% endif %}
 
+                    <span class="relative inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-blue-600 ring-1 ring-inset ring-blue-600">
+                        {{ page_obj.number }}
+                    </span>
+
                     {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">Siguiente</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}" class="relative inline-flex items-center rounded-r-md px-3 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 text-sm font-semibold">Última &raquo;</a>
-                    {% else %}
-                        <span class="relative inline-flex items-center px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">Siguiente</span>
-                        <span class="relative inline-flex items-center rounded-r-md px-3 py-2 text-slate-300 bg-slate-50 ring-1 ring-inset ring-slate-300 text-sm font-semibold cursor-not-allowed">Última &raquo;</span>
+                        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
+                           class="relative inline-flex items-center px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                            Siguiente
+                        </a>
+
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}"
+                           class="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                            Última &raquo;
+                        </a>
                     {% endif %}
+                    
                 </nav>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
