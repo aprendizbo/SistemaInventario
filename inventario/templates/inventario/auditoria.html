@@ -1,43 +1,197 @@
-{% extends 'inventario/base.html' %}<!-- Asumiendo que tienes un base.html con Bootstrap -->
+{% extends 'inventario/base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-history"></i> Historial de Auditoría</h2>
-        <a href="{% url 'inventario:panel_sesiones' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Volver al Panel
-        </a>
-    </div>
+<div class="container mt-4 mb-5">
 
-    <div class="card shadow">
+    <!-- Encabezado Corporativo -->
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Usuario</th>
-                            <th>Acción</th>
-                            <th>Detalle</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for log in logs %}
-                        <tr>
-                            <td>{{ log.fecha|date:"d/m/Y H:i" }}</td>
-                            <td>{{ log.usuario.username }}</td>
-                            <td><span class="badge bg-info text-dark">{{ log.accion }}</span></td>
-                            <td>{{ log.detalle }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center">No hay registros de auditoría disponibles.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-shield-alt text-primary"></i>
+                        Auditoría del Sistema
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Registro completo de movimientos realizados por los usuarios
+                    </p>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'inventario:panel_sesiones' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver al Panel
+                    </a>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Tarjetas Resumen (Arriba) -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold text-dark mb-0">{{ total_logs|default:logs|length }}</h2>
+                    <small class="text-muted fw-bold">Total Movimientos</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold text-success mb-0">{{ total_crear|default:0 }}</h2>
+                    <small class="text-muted fw-bold">Creaciones</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold text-warning mb-0">{{ total_modificar|default:0 }}</h2>
+                    <small class="text-muted fw-bold">Modificaciones</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h2 class="fw-bold text-primary mb-0">{{ total_exportar|default:0 }}</h2>
+                    <small class="text-muted fw-bold">Exportaciones</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtro de Búsqueda -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="fas fa-search text-muted"></i>
+                </span>
+                <input type="text"
+                       id="auditSearch"
+                       class="form-control border-start-0"
+                       placeholder="Buscar usuario, acción o descripción...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Línea de Tiempo (Timeline) -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="timeline" id="timelineContainer">
+                {% for log in logs %}
+                <!-- Elemento de la línea de tiempo -->
+                <div class="timeline-item position-relative pb-4 ps-4 border-start border-2 border-secondary-subtle">
+                    
+                    <!-- Indicador visual (Emoji) -->
+                    <div class="position-absolute top-0 start-0 translate-middle bg-white rounded-circle p-1" style="left: -1px; z-index: 2;">
+                        {% if log.accion == 'CREAR' %}
+                            <span class="fs-5">🟢</span>
+                        {% elif log.accion == 'MODIFICAR' %}
+                            <span class="fs-5">🟡</span>
+                        {% elif log.accion == 'ELIMINAR' %}
+                            <span class="fs-5">🔴</span>
+                        {% elif log.accion == 'EXPORTAR' or log.accion == 'IMPORTAR' %}
+                            <span class="fs-5">🔵</span>
+                        {% else %}
+                            <span class="fs-5">⚪</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Contenido del Registro -->
+                    <div class="card border shadow-none ms-2">
+                        <div class="card-body py-3">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                                
+                                <div>
+                                    <div class="mb-2">
+                                        {% if log.accion == 'CREAR' %}
+                                            <span class="badge bg-success">CREACIÓN</span>
+                                        {% elif log.accion == 'MODIFICAR' %}
+                                            <span class="badge bg-warning text-dark">MODIFICACIÓN</span>
+                                        {% elif log.accion == 'ELIMINAR' %}
+                                            <span class="badge bg-danger">ELIMINACIÓN</span>
+                                        {% elif log.accion == 'EXPORTAR' %}
+                                            <span class="badge bg-info text-dark">EXPORTACIÓN</span>
+                                        {% elif log.accion == 'IMPORTAR' %}
+                                            <span class="badge bg-primary">IMPORTACIÓN</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ log.accion }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Reemplazo de Usuario -->
+                                    <div class="small text-muted">
+                                        Usuario: <strong>{{ log.usuario.username|default:"Sistema" }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nuevo bloque agregado justo antes de la descripción -->
+                            <div class="row mt-2 mb-2">
+                                <div class="col-md-3">
+                                    <small class="text-muted">Modelo</small><br>
+                                    <strong>{{ log.modelo }}</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Acción</small><br>
+                                    <strong>{{ log.get_accion_display }}</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Fecha</small><br>
+                                    <!-- Reemplazo de Fecha y Hora -->
+                                    <strong>{{ log.fecha_hora|date:"d/m/Y" }}</strong><small class="text-muted ms-1">{{ log.fecha_hora|date:"H:i:s" }}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">IP</small><br>
+                                    <strong>{{ log.ip_direccion|default:"N/A" }}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Reemplazo de {{ log.detalle }} por {{ log.descripcion }} -->
+                            <div class="bg-light p-2 rounded border-start border-3 border-secondary text-secondary mt-2">
+                                {{ log.descripcion }}
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0 fs-5">No existen registros de auditoría para mostrar.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<!-- Script para el Filtro de Búsqueda -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById('auditSearch');
+        
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const items = document.querySelectorAll('.timeline-item');
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

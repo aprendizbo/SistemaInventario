@@ -92,46 +92,24 @@
                 {% endif %}
             </div>
 
-            <!-- Ubicación -->
-            <div class="grid grid-cols-3 gap-4">
-                <div>
-                    <label for="{{ form.rack.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
-                        Rack
-                    </label>
-                    {{ form.rack }}
-                    
-                    {% if form.rack.errors %}
-                        {% for error in form.rack.errors %}
-                            <p class="text-xs text-red-600 font-semibold mt-1.5">⚠️ {{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <div>
-                    <label for="{{ form.espacio.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
-                        Espacio
-                    </label>
-                    {{ form.espacio }}
-                    
-                    {% if form.espacio.errors %}
-                        {% for error in form.espacio.errors %}
-                            <p class="text-xs text-red-600 font-semibold mt-1.5">⚠️ {{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-
-                <div>
-                    <label for="{{ form.nivel.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
-                        Nivel
-                    </label>
-                    {{ form.nivel }}
-                    
-                    {% if form.nivel.errors %}
-                        {% for error in form.nivel.errors %}
-                            <p class="text-xs text-red-600 font-semibold mt-1.5">⚠️ {{ error }}</p>
-                        {% endfor %}
-                    {% endif %}
-                </div>
+            <!-- Campo: Ubicación -->
+            <div>
+                <label for="{{ form.ubicacion.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
+                    Ubicación
+                </label>
+                {{ form.ubicacion }}
+                
+                {% if form.ubicacion.errors %}
+                    {% for error in form.ubicacion.errors %}
+                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
+                            ⚠️ {{ error }}
+                        </p>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-slate-400 mt-1">
+                        Seleccione la ubicación física.
+                    </p>
+                {% endif %}
             </div>
 
             <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">

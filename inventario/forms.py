@@ -8,9 +8,7 @@ class ProductoForm(forms.ModelForm):
             'codigo_barras',
             'descripcion',
             'stock_teorico',
-            'rack',
-            'espacio',
-            'nivel'
+            'ubicacion'
         ]
         widgets = {
             'codigo_barras': forms.TextInput(attrs={
@@ -25,16 +23,7 @@ class ProductoForm(forms.ModelForm):
                 'class': 'w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-boccherini-blue focus:border-boccherini-blue block p-2.5',
                 'placeholder': 'Ej. 100'
             }),
-            'rack': forms.TextInput(attrs={
-                'class': 'w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-boccherini-blue focus:border-boccherini-blue block p-2.5',
-                'placeholder': 'Ej. Rack 01'
-            }),
-            'espacio': forms.TextInput(attrs={
-                'class': 'w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-boccherini-blue focus:border-boccherini-blue block p-2.5',
-                'placeholder': 'Ej. A1'
-            }),
-            'nivel': forms.TextInput(attrs={
-                'class': 'w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-boccherini-blue focus:border-boccherini-blue block p-2.5',
-                'placeholder': 'Ej. 01'
+            'ubicacion': forms.Select(attrs={
+                'class': 'w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-boccherini-blue focus:border-boccherini-blue block p-2.5'
             }),
         }

@@ -5,18 +5,23 @@ from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from django.db.models import F, Sum, Q  # Búsqueda combinada
+from django.db.models import F, Sum, Q
 from django.utils import timezone
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from tablib import Dataset
 
-# Modelos (Añadido LogAuditoria)
-from .models import SesionInventario, Producto, ConteoDetalle, Novedad, LogAuditoria
+# Modelos
+from .models import (
+    SesionInventario, 
+    Producto, 
+    ConteoDetalle, 
+    Novedad, 
+    LogAuditoria,
+    Ubicacion
+)
 from .forms import ProductoForm
-
-# Importamos el recurso desde admin.py (No desde models.py para evitar errores)
 from .admin import ProductoResource 
 
 # ==========================================
@@ -29,13 +34,13 @@ def get_client_ip(request):
         return x_forwarded_for.split(',')[0]
     return request.META.get('REMOTE_ADDR')
 
+
 # ==========================================
 # 1. MÓDULO DE GESTIÓN DE SESIONES
 # ==========================================
 
 @login_required
 def panel_sesiones(request):
-    """Tablero principal para seleccionar la sesión de trabajo corporativa."""
     sesiones = SesionInventario.objects.all().order_by('-id')
     return render(request, 'inventario/panel_sesiones.html', {'sesiones': sesiones})
 
@@ -43,7 +48,6 @@ def panel_sesiones(request):
 @login_required
 @require_POST
 def crear_sesion(request):
-    """Crea una nueva sesión de control directo sin pasar por el Django Admin."""
     nombre = request.POST.get('nombre_sesion')
     if not nombre:
         fecha_str = timezone.now().strftime("%Y-%m-%d %H:%M")
@@ -55,28 +59,48 @@ def crear_sesion(request):
         creado_por=request.user
     )
     
-    # AUDITORÍA
     LogAuditoria.objects.create(
         usuario=request.user, accion='CREAR', modelo='SesionInventario', objeto_id=str(sesion.id),
         descripcion=f"Apertura de nueva sesión de inventario: {sesion.nombre}", ip_direccion=get_client_ip(request)
     )
-    
     return redirect('inventario:panel_sesiones')
 
 
 @login_required
 def cerrar_sesion(request, sesion_id):
-    """Cierra y congela la sesión para que los operarios no puedan seguir escaneando."""
     sesion = get_object_or_404(SesionInventario, id=sesion_id)
     sesion.estado = 'CERRADA'
     sesion.save()
     
-    # AUDITORÍA
     LogAuditoria.objects.create(
         usuario=request.user, accion='MODIFICAR', modelo='SesionInventario', objeto_id=str(sesion.id),
         descripcion=f"Cierre de sesión de inventario: {sesion.nombre}", ip_direccion=get_client_ip(request)
     )
-    
+    return redirect('inventario:panel_sesiones')
+
+
+@login_required
+def eliminar_sesion(request, sesion_id):
+    if not request.user.is_superuser:
+        messages.error(request, "No tiene permisos para realizar esta acción.")
+        return redirect('inventario:panel_sesiones')
+
+    sesion = get_object_or_404(SesionInventario, id=sesion_id)
+    nombre_sesion = sesion.nombre
+
+    # Auditoría (Incluyendo la captura de IP para mantener tu estándar)
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='ELIMINAR',
+        modelo='SesionInventario',
+        objeto_id=str(sesion.id),
+        descripcion=f'Se eliminó la sesión "{nombre_sesion}"',
+        ip_direccion=get_client_ip(request)
+    )
+
+    sesion.delete()
+
+    messages.success(request, f'Sesión "{nombre_sesion}" eliminada correctamente.')
     return redirect('inventario:panel_sesiones')
 
 
@@ -86,9 +110,8 @@ def cerrar_sesion(request, sesion_id):
 
 @login_required
 def pantalla_escaner(request, sesion_id):
-    """Pantalla del lector de barras vinculada a una sesión específica."""
     sesion = get_object_or_404(SesionInventario, id=sesion_id, estado='ABIERTA')
-    recientes = ConteoDetalle.objects.filter(sesion=sesion).select_related('producto').order_by('-id')[:5]
+    recientes = ConteoDetalle.objects.filter(sesion=sesion).select_related('producto', 'producto__ubicacion').order_by('-id')[:5]
     
     return render(request, 'inventario/escaner.html', {
         'sesion': sesion,
@@ -99,7 +122,6 @@ def pantalla_escaner(request, sesion_id):
 @login_required
 @require_POST
 def procesar_escaneo(request):
-    """Lógica de procesamiento por AJAX enviada desde la terminal de lectura."""
     try:
         data = json.loads(request.body)
         codigo = data.get('codigo_barras')
@@ -115,15 +137,13 @@ def procesar_escaneo(request):
     sesion = get_object_or_404(SesionInventario, id=sesion_id, estado='ABIERTA')
 
     try:
-        # AGREGADO: Try/Except robusto para la consulta del escáner
         try:
-            producto = Producto.objects.get(codigo_barras=codigo)
+            # Traemos la relación ubicación para optimizar las queries
+            producto = Producto.objects.select_related('ubicacion').get(codigo_barras=codigo)
         except Producto.MultipleObjectsReturned:
-            print(f"ERROR ESCANEO: Múltiples productos con el código [{codigo}]. Revisa tu Base de Datos.")
             return JsonResponse({'status': 'error', 'message': f'Error: Códigos duplicados para [{codigo}]'}, status=400)
         except Exception as e:
-            print(f"ERROR ESCANEO INESPERADO [{codigo}]: {e}")
-            raise e # Relanza para que sea capturado por la lógica de 'DoesNotExist' si es el caso
+            raise e
 
         conteo, created = ConteoDetalle.objects.get_or_create(
             sesion=sesion,
@@ -136,7 +156,6 @@ def procesar_escaneo(request):
             ConteoDetalle.objects.filter(id=conteo.id).update(cantidad=F('cantidad') + cantidad_ingresada)
             conteo.refresh_from_db()
 
-        # AQUÍ SE APLICÓ EL CAMBIO 2 (Retorno con rack, espacio, nivel y diferencia)
         return JsonResponse({
             'status': 'ok',
             'tipo': 'conteo',
@@ -145,9 +164,9 @@ def procesar_escaneo(request):
             'cantidad': conteo.cantidad,
             'codigo': producto.codigo_barras,
             'stock_teorico': producto.stock_teorico,
-            'rack': producto.rack,
-            'espacio': producto.espacio,
-            'nivel': producto.nivel,
+            'rack': producto.ubicacion.rack if producto.ubicacion else '',
+            'espacio': producto.ubicacion.espacio if producto.ubicacion else '',
+            'nivel': producto.ubicacion.nivel if producto.ubicacion else '',
             'diferencia': conteo.cantidad - producto.stock_teorico,
         })
 
@@ -179,16 +198,15 @@ def procesar_escaneo(request):
 
 @login_required
 def lista_productos(request):
-    """Muestra el catálogo maestro de productos con paginación y búsqueda en backend."""
     query = request.GET.get('q', '')
     
     if query:
-        productos_list = Producto.objects.filter(
+        productos_list = Producto.objects.select_related('ubicacion').filter(
             Q(codigo_barras__icontains=query) | 
             Q(descripcion__icontains=query)
         ).order_by('-id')
     else:
-        productos_list = Producto.objects.all().order_by('-id')
+        productos_list = Producto.objects.select_related('ubicacion').all().order_by('-id')
         
     paginator = Paginator(productos_list, 50)
     page_number = request.GET.get('page')
@@ -202,23 +220,11 @@ def lista_productos(request):
 
 @login_required
 def importar_productos(request):
-    """Vista para cargar el maestro de productos masivamente desde un archivo Excel usando Pandas."""
     if request.method == 'POST' and request.FILES.get('archivo_excel'):
         excel_file = request.FILES['archivo_excel']
 
         try:
-            # Leer el archivo Excel usando pandas
             df = pd.read_excel(excel_file)
-            
-            # --- CAMBIO APLICADO AQUÍ (Prints y Try/Except para depurar Excel) ---
-            print(df.columns.tolist())
-            try:
-                print(df[['Código de barras', 'Descripción']].head())
-            except KeyError as e:
-                print(f"Error de columnas al intentar imprimir head(): {e}")
-            # ---------------------------------------------------------------------
-
-            # Rellenar valores nulos (NaN) adaptados a los nuevos nombres de columnas
             df = df.fillna({
                 'Código de barras': '',
                 'Descripción': 'Sin descripción',
@@ -230,89 +236,85 @@ def importar_productos(request):
             productos_crear = []
             productos_actualizar = []
             
-            # Obtenemos los códigos que ya existen en la DB para saber si actualizamos o creamos
             codigos_db = set(Producto.objects.values_list('codigo_barras', flat=True))
             
             for index, row in df.iterrows():
                 codigo = str(row.get('Código de barras', '')).strip()
                 if codigo.endswith('.0'):
                     codigo = codigo[:-2]
-                print(f"Buscando código: [{codigo}]")
-                print(type(row.get('Código de barras')))
                 
-                # Omitir filas vacías o con códigos inválidos
                 if not codigo or codigo.lower() == 'nan':
                     continue  
 
                 descripcion = str(row.get('Descripción', '')).strip()
                 stock = row.get('Cantidad', 0)
+                
                 rack = str(row.get('Almacén', '')).strip()
                 espacio = str(row.get('Ubicación de almacenaje', '')).strip()
-                nivel = ''
+                nivel = '' 
                 
-                # Limpiar cadenas vacías que pandas convierte a string 'nan'
-                rack = rack if rack.lower() != 'nan' else None
-                espacio = espacio if espacio.lower() != 'nan' else None
-                nivel = nivel if nivel.lower() != 'nan' else None
+                rack = rack if rack.lower() != 'nan' else ''
+                espacio = espacio if espacio.lower() != 'nan' else ''
+                nivel = nivel if nivel.lower() != 'nan' else ''
 
                 try:
                     stock = int(stock)
                 except (ValueError, TypeError):
                     stock = 0
 
-                # --- CAMBIO APLICADO AQUÍ (Try-Except para Existencia) ---
+                ubicacion = None
+                if rack or espacio or nivel:
+                    ubicacion, _ = Ubicacion.objects.get_or_create(
+                        codigo_barras=f"{rack}-{espacio}-{nivel}",
+                        defaults={
+                            'rack': rack,
+                            'espacio': espacio,
+                            'nivel': nivel,
+                        }
+                    )
+
                 if codigo in codigos_db:
                     try:
                         prod = Producto.objects.get(codigo_barras=codigo)
 
                         prod.descripcion = descripcion
                         prod.stock_teorico = stock
-                        prod.rack = rack
-                        prod.espacio = espacio
-                        prod.nivel = nivel
+                        prod.ubicacion = ubicacion
 
                         productos_actualizar.append(prod)
 
                     except Producto.DoesNotExist:
-                        print(f"NO EXISTE EN BD: [{codigo}]")
+                        pass
                     except Producto.MultipleObjectsReturned:
-                        print(f"ERROR: Se encontraron MÚLTIPLES productos con el código [{codigo}].")
-                    except Exception as e:
-                        print(f"ERROR INESPERADO con el código [{codigo}]: {e}")
-                # ---------------------------------------------------------
+                        pass
                 else:
-                    # Preparar para crear un nuevo producto
                     productos_crear.append(Producto(
                         codigo_barras=codigo,
                         descripcion=descripcion,
                         stock_teorico=stock,
-                        rack=rack,
-                        espacio=espacio,
-                        nivel=nivel
+                        ubicacion=ubicacion
                     ))
-                    codigos_db.add(codigo) # Evitamos duplicados dentro del mismo Excel
+                    codigos_db.add(codigo)
 
-            # Ejecutamos las operaciones en bloque (Bulk) para rendimiento óptimo
             if productos_crear:
                 Producto.objects.bulk_create(productos_crear)
             
             if productos_actualizar:
                 Producto.objects.bulk_update(
                     productos_actualizar, 
-                    ['descripcion', 'stock_teorico', 'rack', 'espacio', 'nivel']
+                    ['descripcion', 'stock_teorico', 'ubicacion']
                 )
 
-            # AUDITORÍA
             LogAuditoria.objects.create(
                 usuario=request.user, accion='IMPORTAR', modelo='Producto',
-                descripcion=f"Importación Excel (Pandas) exitosa. Creados: {len(productos_crear)}, Actualizados: {len(productos_actualizar)}", 
+                descripcion=f"Importación Excel exitosa. Creados: {len(productos_crear)}, Actualizados: {len(productos_actualizar)}", 
                 ip_direccion=get_client_ip(request)
             )
             
             messages.success(request, f"Importación correcta: {len(productos_crear)} creados y {len(productos_actualizar)} actualizados.")
 
         except Exception as e:
-            messages.error(request, f"Error al procesar el archivo Excel: {str(e)}. Verifica que los nombres de las columnas coincidan.")
+            messages.error(request, f"Error al procesar el archivo Excel: {str(e)}.")
             
         return redirect('inventario:lista_productos')
         
@@ -321,11 +323,9 @@ def importar_productos(request):
 
 @login_required
 def exportar_excel(request):
-    """Exporta el maestro de productos a formato Excel al presionar el botón."""
     producto_resource = ProductoResource()
     dataset = producto_resource.export()
     
-    # AUDITORÍA
     LogAuditoria.objects.create(
         usuario=request.user, accion='EXPORTAR', modelo='Producto',
         descripcion="Descarga del maestro general de productos en Excel", 
@@ -336,7 +336,7 @@ def exportar_excel(request):
         dataset.xlsx, 
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response['Content-Disposition'] = 'attachment; filename="maestro_productos_boccherini.xlsx"'
+    response['Content-Disposition'] = 'attachment; filename="maestro_productos.xlsx"'
     
     return response
 
@@ -352,17 +352,13 @@ def crear_producto(request):
         if form.is_valid():
             producto = form.save()
             
-            # AUDITORÍA
             LogAuditoria.objects.create(
                 usuario=request.user, accion='CREAR', modelo='Producto', objeto_id=str(producto.id),
-                descripcion=f"Creación manual de producto: {producto.codigo_barras} - {producto.descripcion}", 
+                descripcion=f"Creación manual de producto: {producto.codigo_barras}", 
                 ip_direccion=get_client_ip(request)
             )
             
             return redirect('inventario:lista_productos')
-        else:
-            # === AGREGA ESTO PARA DEPURAR ===
-            print("❌ ERRORES DEL FORMULARIO:", form.errors)
     else:
         form = ProductoForm()
     
@@ -370,7 +366,7 @@ def crear_producto(request):
 
 
 # ==========================================
-# 5. PANEL DE NOVEDADES EN VIVO
+# 5. PANEL DE NOVEDADES
 # ==========================================
 
 @login_required
@@ -380,25 +376,24 @@ def lista_novedades(request):
 
 
 # ==========================================
-# 6. REPORTES Y AUDITORÍA (EXPORTACIÓN DATA)
+# 6. REPORTES Y AUDITORÍA
 # ==========================================
 
 @login_required
 def exportar_conteo_csv(request, sesion_id):
     sesion = get_object_or_404(SesionInventario, id=sesion_id)
     
-    # AUDITORÍA
     LogAuditoria.objects.create(
         usuario=request.user, accion='EXPORTAR', modelo='ConteoDetalle', objeto_id=str(sesion.id),
-        descripcion=f"Exportación a CSV de los conteos de la sesión: {sesion.nombre}", 
+        descripcion=f"Exportación CSV sesión: {sesion.nombre}", 
         ip_direccion=get_client_ip(request)
     )
     
     response = HttpResponse(content_type='text/csv; charset=utf-8')
-    response['Content-Disposition'] = f'attachment; filename="historial_boccherini_sesion_{sesion_id}.csv"'
+    response['Content-Disposition'] = f'attachment; filename="historial_sesion_{sesion_id}.csv"'
     
     writer = csv.writer(response)
-    writer.writerow(['ID Sesion', 'Nombre Sesion', 'Codigo de Barras', 'Descripcion Producto', 'Stock Teorico', 'Cantidad Total', 'Auditor/Operario'])
+    writer.writerow(['ID Sesion', 'Nombre Sesion', 'Codigo de Barras', 'Descripcion', 'Stock Teorico', 'Cantidad', 'Operario'])
     
     conteos = ConteoDetalle.objects.filter(sesion=sesion).select_related('producto', 'usuario')
     for item in conteos:
@@ -416,13 +411,13 @@ def exportar_conteo_csv(request, sesion_id):
 
 
 # ==========================================
-# 7. MÓDULO DE CONCILIACIÓN Y CIERRE
+# 7. MÓDULO DE CONCILIACIÓN
 # ==========================================
 
 @login_required
 def conciliacion_sesion(request, sesion_id):
     sesion = get_object_or_404(SesionInventario, id=sesion_id)
-    productos = Producto.objects.all()
+    productos = Producto.objects.select_related('ubicacion').all()
     resultados = []
 
     for p in productos:
@@ -437,11 +432,7 @@ def conciliacion_sesion(request, sesion_id):
                 'diferencia': diferencia,
             })
 
-    context = {
-        'sesion': sesion,
-        'resultados': resultados,
-    }
-    return render(request, 'inventario/conciliacion.html', context)
+    return render(request, 'inventario/conciliacion.html', {'sesion': sesion, 'resultados': resultados})
 
 
 @login_required
@@ -450,13 +441,12 @@ def aplicar_ajuste_inventario(request, sesion_id):
     sesion = get_object_or_404(SesionInventario, id=sesion_id)
 
     if sesion.estado == 'CERRADA':
-        messages.error(request, "Esta sesión ya fue cerrada. No se pueden duplicar los ajustes.")
+        messages.error(request, "Esta sesión ya fue cerrada.")
         return redirect('inventario:conciliacion', sesion_id=sesion.id)
 
     productos = Producto.objects.all()
     for p in productos:
         cantidad_escaneada = p.conteos.filter(sesion=sesion).aggregate(Sum('cantidad'))['cantidad__sum'] or 0
-        
         if cantidad_escaneada > 0 or p.stock_teorico > 0:
             p.stock_teorico = cantidad_escaneada
             p.save()
@@ -465,14 +455,13 @@ def aplicar_ajuste_inventario(request, sesion_id):
     sesion.fecha_fin = timezone.now()
     sesion.save()
     
-    # AUDITORÍA
     LogAuditoria.objects.create(
         usuario=request.user, accion='AJUSTE', modelo='Producto', objeto_id=str(sesion.id),
-        descripcion=f"Aplicación de ajuste general de inventario basado en sesión: {sesion.nombre}", 
+        descripcion=f"Ajuste general de inventario basado en sesión: {sesion.nombre}", 
         ip_direccion=get_client_ip(request)
     )
 
-    messages.success(request, f"¡Éxito! Inventario '{sesion.nombre}' aplicado y stock maestro actualizado.")
+    messages.success(request, f"Inventario '{sesion.nombre}' aplicado exitosamente.")
     return redirect('inventario:panel_sesiones')
 
 
@@ -503,7 +492,6 @@ def asociar_novedad(request, novedad_id):
             
             novedad.delete()
             
-            # AUDITORÍA
             LogAuditoria.objects.create(
                 usuario=request.user, accion='CONCILIAR', modelo='Producto', objeto_id=str(producto.id),
                 descripcion=f"Novedad resuelta. Código '{codigo_viejo}' actualizado a '{producto.codigo_barras}' para el producto '{producto.descripcion}'", 
@@ -540,7 +528,6 @@ def crear_desde_novedad(request, novedad_id):
                 
             novedad.delete()
             
-            # AUDITORÍA
             LogAuditoria.objects.create(
                 usuario=request.user, accion='CREAR', modelo='Producto', objeto_id=str(nuevo_producto.id),
                 descripcion=f"Resolución de novedad. Creó producto nuevo: {nuevo_producto.codigo_barras} - {nuevo_producto.descripcion}", 
@@ -606,7 +593,6 @@ def crear_usuario(request):
         nuevo_usuario.set_password(password) 
         nuevo_usuario.save()
 
-        # AUDITORÍA
         LogAuditoria.objects.create(
             usuario=request.user, accion='CREAR', modelo='User', objeto_id=str(nuevo_usuario.id),
             descripcion=f"Registro de nuevo usuario de sistema: {nuevo_usuario.username} (Admin: {is_admin})", 
@@ -635,7 +621,6 @@ def cambiar_password_usuario(request, user_id):
             usuario_afectado.set_password(nueva_pass)
             usuario_afectado.save()
             
-            # AUDITORÍA
             LogAuditoria.objects.create(
                 usuario=request.user, accion='MODIFICAR', modelo='User', objeto_id=str(usuario_afectado.id),
                 descripcion=f"Restablecimiento de contraseña para el usuario: {usuario_afectado.username}", 
@@ -664,7 +649,6 @@ def toggle_usuario(request, user_id):
 
     estado_str = "Activo" if usuario_afectado.is_active else "Inactivo"
     
-    # AUDITORÍA
     LogAuditoria.objects.create(
         usuario=request.user, accion='MODIFICAR', modelo='User', objeto_id=str(usuario_afectado.id),
         descripcion=f"Cambió el estado del usuario '{usuario_afectado.username}' a {estado_str}", 
@@ -680,11 +664,22 @@ def toggle_usuario(request, user_id):
 
 @login_required
 def historial_auditoria(request):
-    """Muestra el historial de logs del sistema."""
     if not request.user.is_staff:
         messages.error(request, "Acceso denegado.")
         return redirect('inventario:panel_sesiones')
-    
-    logs = LogAuditoria.objects.all().order_by('-id') 
-    
-    return render(request, 'inventario/auditoria.html', {'logs': logs})
+
+    logs = LogAuditoria.objects.select_related(
+        'usuario'
+    ).order_by('-fecha_hora')
+
+    return render(
+        request,
+        'inventario/auditoria.html',
+        {
+            'logs': logs,
+            'total_logs': logs.count(),
+            'total_crear': logs.filter(accion='CREAR').count(),
+            'total_modificar': logs.filter(accion='MODIFICAR').count(),
+            'total_exportar': logs.filter(accion='EXPORTAR').count(),
+        }
+    )
