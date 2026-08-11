@@ -64,11 +64,33 @@ class SesionInventario(models.Model):
         ('ABIERTA', 'Abierta / En Conteo'),
         ('CERRADA', 'Cerrada / Finalizada'),
     )
-    nombre = models.CharField(max_length=150, help_text="Ej: Inventario General Julio 2026")
+
+    nombre = models.CharField(
+        max_length=150,
+        help_text="Ej: Inventario General Julio 2026"
+    )
+
     fecha_inicio = models.DateTimeField(auto_now_add=True)
     fecha_fin = models.DateTimeField(null=True, blank=True)
-    estado = models.CharField(max_length=10, choices=ESTADOS, default='ABIERTA')
-    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+
+    estado = models.CharField(
+        max_length=10,
+        choices=ESTADOS,
+        default='ABIERTA'
+    )
+
+    base = models.ForeignKey(
+        'BaseInventario',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='sesiones'
+    )
+
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT
+    )
 
     def __str__(self):
         return f"{self.nombre} ({self.get_estado_display()})"
@@ -164,3 +186,105 @@ class ProductoResource(resources.ModelResource):
         model = Producto
         fields = ('codigo_barras', 'descripcion', 'stock_teorico', 'ubicacion')
         import_id_fields = ('codigo_barras',)
+
+
+# =====================================================================
+# 5. BASES DE INVENTARIO E HISTORIAL
+# =====================================================================
+class BaseInventario(models.Model):
+
+    ESTADOS = (
+        ('ACTIVA', 'Activa'),
+        ('CERRADA', 'Cerrada'),
+    )
+
+    nombre = models.CharField(
+        max_length=150,
+        default='Base de Inventario'
+    )
+
+    fecha_creacion = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    fecha_cierre = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    estado = models.CharField(
+        max_length=10,
+        choices=ESTADOS,
+        default='ACTIVA'
+    )
+
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='bases_inventario_creadas'
+    )
+
+    cerrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='bases_inventario_cerradas'
+    )
+
+    def __str__(self):
+        return f"{self.nombre} - {self.get_estado_display()}"
+
+
+class HistorialProducto(models.Model):
+
+    base = models.ForeignKey(
+        BaseInventario,
+        on_delete=models.CASCADE,
+        related_name='productos'
+    )
+
+    codigo_barras = models.CharField(
+        max_length=100
+    )
+
+    descripcion = models.CharField(
+        max_length=255
+    )
+
+    stock_teorico = models.PositiveIntegerField(
+        default=0
+    )
+
+    rack = models.CharField(
+        max_length=50,
+        blank=True,
+        default=''
+    )
+
+    espacio = models.CharField(
+        max_length=100,
+        blank=True,
+        default=''
+    )
+
+    nivel = models.CharField(
+        max_length=50,
+        blank=True,
+        default=''
+    )
+
+    cantidad_contada = models.PositiveIntegerField(
+        default=0
+    )
+
+    diferencia = models.IntegerField(
+        default=0
+    )
+
+    fecha_registro = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.codigo_barras} | {self.descripcion}"
