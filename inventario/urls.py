@@ -67,4 +67,23 @@ urlpatterns = [
     path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
     path('usuarios/<int:user_id>/password/', views.cambiar_password_usuario, name='cambiar_password_usuario'),
     path('usuarios/<int:user_id>/toggle/', views.toggle_usuario, name='toggle_usuario'),
+
+    # ==========================================
+    # GESTIÓN DE BASES DE INVENTARIO
+    # ==========================================
+    path(
+        'bases/',
+        views.bases_productos,
+        name='bases_productos'
+    ),
+    path(
+        'bases/crear/',
+        views.crear_base_inventario,
+        name='crear_base_inventario'
+    ),
+    path(
+        'bases/cerrar/<int:base_id>/',
+        views.cerrar_base_inventario,
+        name='cerrar_base_inventario'
+    ),
 ]

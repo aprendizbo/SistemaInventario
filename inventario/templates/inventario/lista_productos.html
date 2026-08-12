@@ -33,6 +33,53 @@
     </div>
 
     <!-- 🔍 Barra de Búsqueda Conectada a Django -->
+    
+    <!-- BASE DE INVENTARIO ACTIVA -->
+    {% if base_activa %}<div class="mb-6 bg-white rounded-2xl shadow-md border border-emerald-200 overflow-hidden">
+        <div class="px-6 py-4 flex items-center justify-between bg-emerald-50">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">
+                    Base de inventario activa
+                </p>
+
+                <h3 class="text-lg font-extrabold text-slate-800 mt-1">
+                    {{ base_activa.nombre }}
+                </h3>
+
+                <p class="text-xs text-slate-500 mt-1">
+                    Creada el {{ base_activa.fecha_creacion|date:"d/m/Y H:i" }}
+                    por {{ base_activa.creado_por }}
+                </p>
+            </div>
+
+            <span class="inline-flex items-center px-3 py-1 rounded-full
+                         bg-emerald-100 text-emerald-700
+                         text-xs font-extrabold uppercase">
+                ● ACTIVA
+            </span>
+        </div></div>
+    {% else %}<div class="mb-6 bg-white rounded-2xl shadow-md border border-red-200 overflow-hidden">
+        <div class="px-6 py-4 bg-red-50">
+            <p class="text-xs font-bold uppercase tracking-wider text-red-600">
+                Sin base de inventario activa
+            </p>
+
+            <h3 class="text-lg font-extrabold text-red-800 mt-1">
+                No hay una base abierta
+            </h3>
+
+            <p class="text-sm text-red-600 mt-1">
+                Debe crear una base de inventario antes de importar productos.
+            </p>
+
+            <a href="{% url 'inventario:panel_sesiones' %}"
+               class="inline-flex mt-4 items-center bg-red-600 hover:bg-red-700
+                      text-white font-bold px-4 py-2 rounded-lg text-sm">
+                Ir a Control de Sesiones →
+            </a>
+        </div></div>
+    {% endif %}
+
     <div class="mb-6 max-w-xl">
         <form method="GET" action="{% url 'inventario:lista_productos' %}" class="flex gap-2">
             <div class="relative rounded-xl shadow-sm flex-grow">
