@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <title>Bases de Inventario</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f5f7fa;
+        }
+
+        h1 {
+            color: #0b2a4a;
+        }
+
+        .mensaje {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #0b2a4a;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .estado-activa {
+            color: #087f23;
+            font-weight: bold;
+        }
+
+        .estado-cerrada {
+            color: #777;
+            font-weight: bold;
+        }
+
+        .btn-cerrar {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-cerrar:hover {
+            background: #b02a37;
+        }
+
+        .sin-accion {
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Bases de Inventario</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mensaje">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if bases %}
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Estado</th>
+                    <th>Fecha de creación</th>
+                    <th>Fecha de cierre</th>
+                    <th>Creado por</th>
+                    <th>Cerrado por</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for base in bases %}
+
+                    <tr>
+
+                        <td>
+                            {{ base.nombre }}
+                        </td>
+
+                        <td>
+
+                            {% if base.estado == 'ACTIVA' %}
+
+                                <span class="estado-activa">
+                                    ● ACTIVA
+                                </span>
+
+                            {% else %}
+
+                                <span class="estado-cerrada">
+                                    ● CERRADA
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ base.fecha_creacion|date:"d/m/Y H:i" }}
+                        </td>
+
+                        <td>
+
+                            {% if base.fecha_cierre %}
+
+                                {{ base.fecha_cierre|date:"d/m/Y H:i" }}
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ base.creado_por.username }}
+                        </td>
+
+                        <td>
+
+                            {% if base.cerrado_por %}
+
+                                {{ base.cerrado_por.username }}
+
+                            {% else %}
+
+                                -
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if base.estado == 'ACTIVA' %}
+
+                                <form
+                                    method="POST"
+                                    action="{% url 'inventario:cerrar_base_inventario' base.id %}"
+                                    onsubmit="return confirmarCierre('{{ base.nombre|escapejs }}');"
+                                >
+
+                                    {% csrf_token %}
+
+                                    <button
+                                        type="submit"
+                                        class="btn-cerrar"
+                                    >
+                                        🔒 Cerrar base
+                                    </button>
+
+                                </form>
+
+                            {% else %}
+
+                                <span class="sin-accion">
+                                    Sin acciones
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    {% else %}
+
+        <p>
+            No hay bases de inventario registradas.
+        </p>
+
+    {% endif %}
+
+
+    <script>
+
+        function confirmarCierre(nombreBase) {
+
+            return confirm(
+                "¿Está seguro de cerrar la base de inventario '" +
+                nombreBase +
+                "'?\n\n" +
+                "Al cerrar la base:\n" +
+                "• Los productos actuales serán guardados en el historial.\n" +
+                "• Se registrará la fecha de cierre.\n" +
+                "• Los productos serán retirados del Maestro de Productos.\n" +
+                "• La base quedará cerrada y no podrá volver a utilizarse.\n\n" +
+                "¿Desea continuar?"
+            );
+
+        }
+
+    </script>
+
+</body>
+</html>

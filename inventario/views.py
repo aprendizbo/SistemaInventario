@@ -14,12 +14,14 @@ from tablib import Dataset
 
 # Modelos
 from .models import (
-    SesionInventario, 
-    Producto, 
-    ConteoDetalle, 
-    Novedad, 
+    SesionInventario,
+    Producto,
+    ConteoDetalle,
+    Novedad,
     LogAuditoria,
-    Ubicacion
+    Ubicacion,
+    BaseInventario,
+    HistorialProducto
 )
 from .forms import ProductoForm
 from .admin import ProductoResource 
@@ -33,6 +35,15 @@ def get_client_ip(request):
     if x_forwarded_for:
         return x_forwarded_for.split(',')[0]
     return request.META.get('REMOTE_ADDR')
+
+def get_base_activa():
+    """
+    Obtiene la base de inventario actualmente activa.
+    Solo puede existir una base activa.
+    """
+    return BaseInventario.objects.filter(
+        estado='ACTIVA'
+    ).order_by('-id').first()
 
 
 # ==========================================
@@ -193,28 +204,123 @@ def procesar_escaneo(request):
 
 
 # ==========================================
+# GESTIÓN DE BASES DE INVENTARIO
+# ==========================================
+@login_required
+def bases_productos(request):
+    bases = BaseInventario.objects.all().order_by('-fecha_inicio')
+
+    return render(
+        request,
+        'inventario/bases_productos.html',
+        {
+            'bases': bases
+        }
+    )
+
+@login_required
+@require_POST
+def crear_base_productos(request):
+    nombre = request.POST.get('nombre')
+
+    if not nombre:
+        nombre = f"Base de Inventario - {timezone.now().strftime('%d/%m/%Y %H:%M')}"
+
+    base = BaseInventario.objects.create(
+        nombre=nombre,
+        creado_por=request.user
+    )
+
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='CREAR',
+        modelo='BaseInventario',
+        objeto_id=str(base.id),
+        descripcion=f"Creación de base de inventario: {base.nombre}",
+        ip_direccion=get_client_ip(request)
+    )
+
+    messages.success(
+        request,
+        f'Base "{base.nombre}" creada correctamente.'
+    )
+
+    return redirect('inventario:bases_productos')
+
+@login_required
+@require_POST
+def cerrar_base_productos(request, base_id):
+    base = get_object_or_404(BaseInventario, id=base_id)
+
+    if base.estado == 'CERRADA':
+        messages.error(request, 'Esta base de inventario ya está cerrada.')
+        return redirect('inventario:bases_productos')
+
+    # Guardar los productos actuales en el historial
+    productos = Producto.objects.select_related('ubicacion').all()
+
+    for producto in productos:
+        HistorialProducto.objects.create(
+            base=base,
+            codigo_barras=producto.codigo_barras,
+            descripcion=producto.descripcion,
+            stock_teorico=producto.stock_teorico,
+            ubicacion=str(producto.ubicacion) if producto.ubicacion else ''
+        )
+
+    # Marcar la base como cerrada
+    base.estado = 'CERRADA'
+    base.fecha_fin = timezone.now()
+    base.save()
+
+    # Limpiar el maestro actual para comenzar una nueva base
+    Producto.objects.all().delete()
+
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='ELIMINAR',
+        modelo='BaseInventario',
+        objeto_id=str(base.id),
+        descripcion=f'Base de inventario cerrada: {base.nombre}. '
+                    f'Se archivaron {productos.count()} productos en el historial.',
+        ip_direccion=get_client_ip(request)
+    )
+
+    messages.success(
+        request,
+        f'Base "{base.nombre}" cerrada correctamente. '
+        f'Los productos fueron enviados al historial.'
+    )
+
+    return redirect('inventario:bases_productos')
+
+
+# ==========================================
 # 3. MAESTRO GENERAL Y CATÁLOGOS
 # ==========================================
 
 @login_required
 def lista_productos(request):
     query = request.GET.get('q', '')
-    
+
     if query:
         productos_list = Producto.objects.select_related('ubicacion').filter(
-            Q(codigo_barras__icontains=query) | 
+            Q(codigo_barras__icontains=query) |
             Q(descripcion__icontains=query)
         ).order_by('-id')
     else:
         productos_list = Producto.objects.select_related('ubicacion').all().order_by('-id')
-        
+
     paginator = Paginator(productos_list, 50)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
+    base_activa = get_base_activa()
+
     return render(request, 'inventario/lista_productos.html', {
         'page_obj': page_obj,
-        'query': query
+        'query': query,
+        'base_activa': base_activa,
     })
 
 
@@ -224,101 +330,197 @@ def importar_productos(request):
         excel_file = request.FILES['archivo_excel']
 
         try:
+            base_activa = get_base_activa()
+
+            if not base_activa:
+                messages.error(
+                    request,
+                    'No existe una base de inventario activa. '
+                    'Debe crear una base antes de importar productos.'
+                )
+                return redirect('inventario:lista_productos')
+
             df = pd.read_excel(excel_file)
-            df = df.fillna({
-                'Código de barras': '',
-                'Descripción': 'Sin descripción',
-                'Cantidad': 0,
-                'Almacén': '',
-                'Ubicación de almacenaje': ''
-            })
+
+            # Limpiar nombres de columnas
+            df.columns = df.columns.str.strip().str.lower()
+
+            # Columnas obligatorias del Excel
+            columnas_requeridas = {
+                'codigo_barras',
+                'descripcion',
+                'stock_teorico',
+                'ubicacion'
+            }
+
+            columnas_faltantes = columnas_requeridas - set(df.columns)
+
+            if columnas_faltantes:
+                messages.error(
+                    request,
+                    f"El archivo no tiene las columnas requeridas: "
+                    f"{', '.join(columnas_faltantes)}"
+                )
+                return redirect('inventario:lista_productos')
 
             productos_crear = []
             productos_actualizar = []
-            
-            codigos_db = set(Producto.objects.values_list('codigo_barras', flat=True))
-            
+
+            codigos_db = set(
+                Producto.objects.values_list('codigo_barras', flat=True)
+            )
+
             for index, row in df.iterrows():
-                codigo = str(row.get('Código de barras', '')).strip()
+
+                # ==============================
+                # CÓDIGO DE BARRAS
+                # ==============================
+                codigo = str(row.get('codigo_barras', '')).strip()
+
                 if codigo.endswith('.0'):
                     codigo = codigo[:-2]
-                
-                if not codigo or codigo.lower() == 'nan':
-                    continue  
 
-                descripcion = str(row.get('Descripción', '')).strip()
-                stock = row.get('Cantidad', 0)
-                
-                rack = str(row.get('Almacén', '')).strip()
-                espacio = str(row.get('Ubicación de almacenaje', '')).strip()
-                nivel = '' 
-                
-                rack = rack if rack.lower() != 'nan' else ''
-                espacio = espacio if espacio.lower() != 'nan' else ''
-                nivel = nivel if nivel.lower() != 'nan' else ''
+                if not codigo or codigo.lower() == 'nan':
+                    continue
+
+                # ==============================
+                # DESCRIPCIÓN
+                # ==============================
+                descripcion = str(
+                    row.get('descripcion', '')
+                ).strip()
+
+                if not descripcion or descripcion.lower() == 'nan':
+                    descripcion = 'Sin descripción'
+
+                # ==============================
+                # STOCK TEÓRICO
+                # ==============================
+                stock = row.get('stock_teorico', 0)
 
                 try:
-                    stock = int(stock)
+                    stock = int(float(stock))
                 except (ValueError, TypeError):
                     stock = 0
 
+                # ==============================
+                # UBICACIÓN
+                # ==============================
+                ubicacion_texto = str(
+                    row.get('ubicacion', '')
+                ).strip()
+
+                if ubicacion_texto.lower() == 'nan':
+                    ubicacion_texto = ''
+
                 ubicacion = None
-                if rack or espacio or nivel:
+
+                if ubicacion_texto:
+
                     ubicacion, _ = Ubicacion.objects.get_or_create(
-                        codigo_barras=f"{rack}-{espacio}-{nivel}",
+                        codigo_barras=ubicacion_texto,
                         defaults={
-                            'rack': rack,
-                            'espacio': espacio,
-                            'nivel': nivel,
+                            'rack': ubicacion_texto,
+                            'espacio': '',
+                            'nivel': '',
                         }
                     )
 
+                # ==============================
+                # ACTUALIZAR PRODUCTO EXISTENTE
+                # ==============================
                 if codigo in codigos_db:
+
                     try:
-                        prod = Producto.objects.get(codigo_barras=codigo)
+                        producto = Producto.objects.get(
+                            codigo_barras=codigo
+                        )
 
-                        prod.descripcion = descripcion
-                        prod.stock_teorico = stock
-                        prod.ubicacion = ubicacion
+                        producto.descripcion = descripcion
+                        producto.stock_teorico = stock
+                        producto.ubicacion = ubicacion
 
-                        productos_actualizar.append(prod)
+                        productos_actualizar.append(producto)
 
                     except Producto.DoesNotExist:
                         pass
+
                     except Producto.MultipleObjectsReturned:
-                        pass
+                        messages.warning(
+                            request,
+                            f"El código {codigo} está duplicado en la base de datos."
+                        )
+
+                # ==============================
+                # CREAR PRODUCTO NUEVO
+                # ==============================
                 else:
-                    productos_crear.append(Producto(
-                        codigo_barras=codigo,
-                        descripcion=descripcion,
-                        stock_teorico=stock,
-                        ubicacion=ubicacion
-                    ))
+
+                    productos_crear.append(
+                        Producto(
+                            codigo_barras=codigo,
+                            descripcion=descripcion,
+                            stock_teorico=stock,
+                            ubicacion=ubicacion
+                        )
+                    )
+
                     codigos_db.add(codigo)
 
+            # ==============================
+            # GUARDAR NUEVOS
+            # ==============================
             if productos_crear:
                 Producto.objects.bulk_create(productos_crear)
-            
+
+            # ==============================
+            # ACTUALIZAR EXISTENTES
+            # ==============================
             if productos_actualizar:
                 Producto.objects.bulk_update(
-                    productos_actualizar, 
-                    ['descripcion', 'stock_teorico', 'ubicacion']
+                    productos_actualizar,
+                    [
+                        'descripcion',
+                        'stock_teorico',
+                        'ubicacion'
+                    ]
                 )
 
+            # ==============================
+            # AUDITORÍA
+            # ==============================
             LogAuditoria.objects.create(
-                usuario=request.user, accion='IMPORTAR', modelo='Producto',
-                descripcion=f"Importación Excel exitosa. Creados: {len(productos_crear)}, Actualizados: {len(productos_actualizar)}", 
+                usuario=request.user,
+                accion='IMPORTAR',
+                modelo='Producto',
+                descripcion=(
+                    f"Importación Excel exitosa. "
+                    f"Creados: {len(productos_crear)}, "
+                    f"Actualizados: {len(productos_actualizar)}"
+                ),
                 ip_direccion=get_client_ip(request)
             )
-            
-            messages.success(request, f"Importación correcta: {len(productos_crear)} creados y {len(productos_actualizar)} actualizados.")
+
+            messages.success(
+                request,
+                f"Importación correcta: "
+                f"{len(productos_crear)} creados y "
+                f"{len(productos_actualizar)} actualizados."
+            )
 
         except Exception as e:
-            messages.error(request, f"Error al procesar el archivo Excel: {str(e)}.")
-            
+
+            messages.error(
+                request,
+                f"Error al procesar el archivo Excel: {str(e)}"
+            )
+
         return redirect('inventario:lista_productos')
-        
-    return render(request, 'inventario/importar_productos.html')
+
+    return render(
+        request,
+        'inventario/importar_productos.html'
+    )
 
 
 @login_required
@@ -683,3 +885,138 @@ def historial_auditoria(request):
             'total_exportar': logs.filter(accion='EXPORTAR').count(),
         }
     )
+
+# =====================================================================
+# GESTIÓN DE BASES DE INVENTARIO
+# =====================================================================
+@login_required
+def crear_base_inventario(request):
+
+    if request.method != 'POST':
+        return redirect('inventario:panel_sesiones')
+
+    base_existente = BaseInventario.objects.filter(
+        estado='ACTIVA'
+    ).first()
+
+    if base_existente:
+        messages.error(
+            request,
+            f"Ya existe una base activa: {base_existente.nombre}"
+        )
+        return redirect('inventario:panel_sesiones')
+
+    nombre = request.POST.get(
+        'nombre_base',
+        ''
+    ).strip()
+
+    if not nombre:
+        fecha = timezone.now().strftime('%d/%m/%Y %H:%M')
+        nombre = f'Base de Inventario - {fecha}'
+
+    base = BaseInventario.objects.create(
+        nombre=nombre,
+        estado='ACTIVA',
+        creado_por=request.user
+    )
+
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='CREAR',
+        modelo='BaseInventario',
+        objeto_id=str(base.id),
+        descripcion=f'Se creó la base de inventario "{base.nombre}"',
+        ip_direccion=get_client_ip(request)
+    )
+
+    messages.success(
+        request,
+        f'Base "{base.nombre}" creada correctamente.'
+    )
+
+    return redirect('inventario:panel_sesiones')
+
+# =====================================================================
+# CERRAR BASE DE INVENTARIO
+# =====================================================================
+@login_required
+@require_POST
+def cerrar_base_inventario(request, base_id):
+
+    base = get_object_or_404(
+        BaseInventario,
+        id=base_id,
+        estado='ACTIVA'
+    )
+
+    productos = Producto.objects.select_related('ubicacion').all()
+
+    cantidad_productos = 0
+
+    for producto in productos:
+
+        cantidad_contada = 0
+
+        # Buscamos el conteo realizado durante las sesiones
+        # relacionadas con esta base.
+        sesiones = SesionInventario.objects.filter(
+            estado='CERRADA'
+        )
+
+        for sesion in sesiones:
+            cantidad_contada += (
+                producto.conteos
+                .filter(sesion=sesion)
+                .aggregate(
+                    total=Sum('cantidad')
+                )['total'] or 0
+            )
+
+        diferencia = cantidad_contada - producto.stock_teorico
+
+        HistorialProducto.objects.create(
+            base=base,
+            codigo_barras=producto.codigo_barras,
+            descripcion=producto.descripcion,
+            stock_teorico=producto.stock_teorico,
+            rack=producto.ubicacion.rack if producto.ubicacion else '',
+            espacio=producto.ubicacion.espacio if producto.ubicacion else '',
+            nivel=producto.ubicacion.nivel if producto.ubicacion else '',
+            cantidad_contada=cantidad_contada,
+            diferencia=diferencia
+        )
+
+        cantidad_productos += 1
+
+    # Cerramos la base
+    base.estado = 'CERRADA'
+    base.fecha_cierre = timezone.now()
+    base.cerrado_por = request.user
+    base.save(
+        update_fields=[
+            'estado',
+            'fecha_cierre',
+            'cerrado_por'
+        ]
+    )
+
+    LogAuditoria.objects.create(
+        usuario=request.user,
+        accion='MODIFICAR',
+        modelo='BaseInventario',
+        objeto_id=str(base.id),
+        descripcion=(
+            f'Se cerró la base "{base.nombre}". '
+            f'Se archivaron {cantidad_productos} productos en el historial.'
+        ),
+        ip_direccion=get_client_ip(request)
+    )
+
+    messages.success(
+        request,
+        f'La base "{base.nombre}" fue cerrada correctamente. '
+        f'{cantidad_productos} productos fueron enviados al historial.'
+    )
+
+    return redirect('inventario:panel_sesiones')
