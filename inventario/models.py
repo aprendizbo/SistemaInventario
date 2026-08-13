@@ -240,7 +240,7 @@ class HistorialProducto(models.Model):
 
     base = models.ForeignKey(
         BaseInventario,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name='productos'
     )
 
@@ -285,6 +285,16 @@ class HistorialProducto(models.Model):
     fecha_registro = models.DateTimeField(
         auto_now_add=True
     )
+
+    fecha_actualizacion = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['base', 'codigo_barras']),
+            models.Index(fields=['base', 'descripcion']),
+        ]
 
     def __str__(self):
         return f"{self.codigo_barras} | {self.descripcion}"

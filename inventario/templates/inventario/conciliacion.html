@@ -22,10 +22,23 @@
             </a>
             
             {% if sesion.estado == 'ABIERTA' %}
-            <form action="{% url 'inventario:aplicar_ajuste' sesion.id %}" method="POST" onsubmit="return confirm('⚠️ ¿Estás seguro de APLICAR este inventario? Esto actualizará el stock maestro y cerrará la sesión de forma irreversible.');">
+            <form
+                action="{% url 'inventario:aplicar_ajuste' sesion.id %}"
+                method="POST"
+                onsubmit="return confirm(
+                    '¿Confirmas la aplicación del inventario?\n\n' +
+                    'Se actualizará el stock maestro con las cantidades físicas contadas y ' +
+                    'la sesión quedará cerrada.\n\n' +
+                    'Esta operación no podrá repetirse sobre esta sesión.'
+                );">
                 {% csrf_token %}
-                <button type="submit" class="inline-flex items-center space-x-2 bg-rose-600 hover:bg-rose-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-sm">
-                    <span>🔒</span> <span>Cerrar Sesión y Aplicar Stock</span>
+
+                <button
+                    type="submit"
+                    class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-sm"
+                >
+                    <span>✓</span>
+                    <span>Aplicar inventario y cerrar sesión</span>
                 </button>
             </form>
             {% endif %}
