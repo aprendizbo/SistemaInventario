@@ -5,7 +5,7 @@
 {% block content %}
 <div class="max-w-4xl mx-auto">
     
-    <!-- CABECERA: Botón de Auditoría e Integración -->
+    <!-- CABECERA -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
         <div>
             <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Seleccione la Sesión de Trabajo</h2>
@@ -13,22 +13,6 @@
         </div>
         
         <div class="flex flex-wrap gap-2">
-
-            <!-- Auditoría -->
-            <a href="{% url 'inventario:historial_auditoria' %}"
-               class="inline-flex items-center space-x-1 text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 px-4 py-2.5 rounded-xl shadow-sm animacion-suave">
-                <span>📋</span>
-                <span>Auditoría</span>
-            </a>
-        
-            <!-- NUEVA BASE -->
-            <button type="button"
-                    onclick="abrirModalNuevaBase()"
-                    class="inline-flex items-center space-x-1 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl shadow-md animacion-suave border-0 cursor-pointer">
-                <span>📦</span>
-                <span>Nueva Base</span>
-            </button>
-        
             <!-- NUEVA SESIÓN -->
             <form action="{% url 'inventario:crear_sesion' %}"
                   method="POST"
@@ -74,8 +58,26 @@
                     </span>
                     {% endif %}
                 </div>
+                
                 <h3 class="text-lg font-bold text-slate-800 tracking-tight mb-1">{{ sesion.nombre|default:"Sesión sin descripción" }}</h3>
-                <p class="text-xs text-slate-400">Base: {{ sesion.fecha|date:"d M Y - h:i a"|default:"Reciente" }}</p>
+                
+                <p class="text-xs text-slate-400">
+                    Base:
+                    {% if sesion.base %}
+                        <span class="font-semibold text-slate-500">
+                            {{ sesion.base.nombre }}
+                        </span>
+                    {% else %}
+                        <span class="text-rose-500">
+                            Sin base asociada
+                        </span>
+                    {% endif %}
+                </p>
+                
+                <p class="text-xs text-slate-400 mt-1">
+                    Inicio: {{ sesion.fecha_inicio|date:"d/m/Y - h:i a" }}
+                </p>
+                
             </div>
             
             <!-- Contenedor de Acciones -->
@@ -97,11 +99,20 @@
                             ⚖️ Conciliar
                         </a>
 
-                        <a href="{% url 'inventario:cerrar_sesion' sesion.id %}" onclick="return confirm('¿Seguro que deseas cerrar la sesión SIN aplicar el inventario? El escáner se bloqueará definitivamente.');" class="flex-1 inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors border border-rose-200 shadow-sm text-center" title="Cerrar sin actualizar maestro">
-                            🔒 Fin
-                        </a>
+                        <!-- FORMULARIO PARA CERRAR SESIÓN -->
+                        <form method="POST"
+                              action="{% url 'inventario:cerrar_sesion' sesion.id %}"
+                              class="flex flex-1"
+                              onsubmit="return confirm('¿Seguro que deseas cerrar la sesión SIN aplicar el inventario? El escáner se bloqueará definitivamente.');">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="w-full inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors border border-rose-200 shadow-sm text-center"
+                                    title="Cerrar sin actualizar maestro">
+                                🔒 Fin
+                            </button>
+                        </form>
 
-                        <!-- NUEVO BOTÓN ELIMINAR (Solo Superuser) -->
+                        <!-- BOTÓN ELIMINAR (Solo Superuser) -->
                         {% if request.user.is_superuser %}
                         <form method="post" action="{% url 'inventario:eliminar_sesion' sesion.id %}" class="flex flex-1">
                             {% csrf_token %}
@@ -127,7 +138,7 @@
                             📊 CSV
                         </a>
 
-                        <!-- NUEVO BOTÓN ELIMINAR (Solo Superuser) -->
+                        <!-- BOTÓN ELIMINAR (Solo Superuser) -->
                         {% if request.user.is_superuser %}
                         <form method="post" action="{% url 'inventario:eliminar_sesion' sesion.id %}" class="flex flex-1">
                             {% csrf_token %}
@@ -156,86 +167,4 @@
         {% endfor %}
     </div>
 </div>
-
-<!-- ========================================================= -->
-<!-- MODAL NUEVA BASE DE INVENTARIO -->
-<!-- ========================================================= -->
-<div id="modalNuevaBase"
-     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 px-4">
-
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-
-        <div class="bg-boccherini-blue px-6 py-5"
-             style="background-color:#0b2240;">
-
-            <h3 class="text-lg font-bold text-white">
-                📦 Nueva Base de Inventario
-            </h3>
-
-            <p class="text-xs text-slate-300 mt-1">
-                Cree una nueva base para cargar el maestro de productos.
-            </p>
-
-        </div>
-
-        <form action="{% url 'inventario:crear_base_inventario' %}"
-              method="POST">
-
-            {% csrf_token %}
-
-            <div class="p-6">
-
-                <label class="block text-sm font-bold text-slate-700 mb-2">
-                    Nombre de la base
-                </label>
-
-                <input
-                    type="text"
-                    name="nombre_base"
-                    placeholder="Ej: Inventario General Agosto 2026"
-                    class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 text-sm"
-                >
-
-                <p class="text-xs text-slate-400 mt-2">
-                    Si lo deja vacío, el sistema generará el nombre automáticamente.
-                </p>
-
-            </div>
-
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
-
-                <button
-                    type="button"
-                    onclick="cerrarModalNuevaBase()"
-                    class="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 font-bold text-sm hover:bg-slate-100">
-                    Cancelar
-                </button>
-
-                <button
-                    type="submit"
-                    class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md">
-                    Crear Base
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-</div>
-
-<script>
-function abrirModalNuevaBase() {
-    const modal = document.getElementById('modalNuevaBase');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function cerrarModalNuevaBase() {
-    const modal = document.getElementById('modalNuevaBase');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-}
-</script>
-
 {% endblock %}

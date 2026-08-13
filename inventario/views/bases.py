@@ -101,7 +101,8 @@ def crear_base_inventario(request):
         f'Base "{base.nombre}" creada correctamente.'
     )
 
-    return redirect('inventario:panel_sesiones')
+    # 👇 AQUÍ ESTÁ EL CAMBIO SOLICITADO 👇
+    return redirect('inventario:bases_productos')
 
 
 # ============================================================
@@ -122,7 +123,32 @@ def cerrar_base_inventario(request, base_id):
         with transaction.atomic():
 
             # =====================================================
-            # 1. OBTENER PRODUCTOS ACTUALES
+            # 1. TODAS LAS SESIONES DE ESTA BASE
+            # =====================================================
+
+            sesiones = SesionInventario.objects.filter(
+                base=base
+            ).order_by('id')
+
+            # No permitir cerrar la base mientras exista
+            # una sesión abierta.
+            sesiones_abiertas = sesiones.filter(
+                estado='ABIERTA'
+            ).count()
+
+            if sesiones_abiertas > 0:
+                messages.error(
+                    request,
+                    (
+                        f'No se puede cerrar la base "{base.nombre}". '
+                        f'Existen {sesiones_abiertas} sesión(es) '
+                        f'abierta(s). Debe cerrarlas primero.'
+                    )
+                )
+                return redirect('inventario:panel_sesiones')
+
+            # =====================================================
+            # 2. PRODUCTOS ACTUALES
             # =====================================================
 
             productos = Producto.objects.select_related(
@@ -132,23 +158,24 @@ def cerrar_base_inventario(request, base_id):
             cantidad_productos = productos.count()
 
             # =====================================================
-            # 2. OBTENER SESIONES CERRADAS
+            # 3. CREAR SNAPSHOT HISTÓRICO
             # =====================================================
-
-            sesiones = SesionInventario.objects.filter(
-                base=base,
-                estado='CERRADA'
-            )
-
-            # =====================================================
-            # 3. GUARDAR CADA PRODUCTO EN EL HISTORIAL
-            # =====================================================
+            #
+            # IMPORTANTE:
+            # NO se elimina Producto.
+            # NO se elimina ConteoDetalle.
+            #
+            # El historial guarda una fotografía del inventario
+            # en el momento en que se cierra la base.
+            #
 
             for producto in productos:
 
                 cantidad_contada = 0
 
-                for sesion in sesiones:
+                for sesion in sesiones.filter(
+                    estado='CERRADA'
+                ):
 
                     total = (
                         producto.conteos
@@ -211,24 +238,25 @@ def cerrar_base_inventario(request, base_id):
             )
 
             # =====================================================
-            # 5. ELIMINAR LOS CONTEOS
+            # 5. CONSERVAR LOS CONTEOS
             # =====================================================
             #
-            # Producto tiene on_delete=PROTECT en ConteoDetalle,
-            # por eso primero debemos eliminar los conteos.
+            # Los ConteoDetalle forman parte de la trazabilidad
+            # histórica y NO se eliminan.
             #
 
-            ConteoDetalle.objects.filter(
-                producto__in=productos
-            ).delete()
-
             # =====================================================
-            # 6. ELIMINAR PRODUCTOS DEL MAESTRO
+            # 6. CONSERVAR EL MAESTRO DE PRODUCTOS
             # =====================================================
-
-            Producto.objects.filter(
-                id__in=productos.values('id')
-            ).delete()
+            #
+            # Los productos NO se eliminan.
+            #
+            # El Maestro de Productos representa los artículos
+            # actuales de la empresa.
+            #
+            # La fotografía de esta base queda almacenada en
+            # HistorialProducto.
+            #
 
             # =====================================================
             # 7. AUDITORÍA
@@ -236,27 +264,27 @@ def cerrar_base_inventario(request, base_id):
 
             LogAuditoria.objects.create(
                 usuario=request.user,
-                accion='ELIMINAR',
+                accion='MODIFICAR',
                 modelo='BaseInventario',
                 objeto_id=str(base.id),
                 descripcion=(
                     f'Se cerró la base "{base.nombre}". '
                     f'Se archivaron {cantidad_productos} productos '
-                    f'en el historial y se limpió el maestro actual.'
+                    f'en el historial. '
+                    f'El Maestro de Productos y los conteos históricos '
+                    f'fueron conservados para mantener la trazabilidad.'
                 ),
                 ip_direccion=get_client_ip(request)
             )
-
-        # =========================================================
-        # 8. MENSAJE FINAL
-        # =========================================================
 
         messages.success(
             request,
             (
                 f'La base "{base.nombre}" fue cerrada correctamente. '
                 f'{cantidad_productos} productos fueron archivados '
-                f'y retirados del Maestro de Productos.'
+                f'en el historial. '
+                f'El Maestro de Productos se conserva para el siguiente '
+                f'inventario.'
             )
         )
 
