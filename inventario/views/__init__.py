@@ -1,4 +1,4 @@
-from .sesiones import (
+﻿from .sesiones import (
     panel_sesiones,
     crear_sesion,
     cerrar_sesion,
@@ -34,6 +34,9 @@ from .usuarios import (
     crear_usuario,
     cambiar_password_usuario,
     toggle_usuario,
+)
+
+from .auditoria import (
     historial_auditoria,
 )
 
