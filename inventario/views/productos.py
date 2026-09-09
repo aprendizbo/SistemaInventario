@@ -1,6 +1,6 @@
 import pandas as pd
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.contrib import messages
@@ -11,6 +11,7 @@ from ..models import (
     Producto,
     Ubicacion,
     LogAuditoria,
+    BaseProducto,
 )
 from ..forms import ProductoForm
 from ..admin import ProductoResource
@@ -495,6 +496,24 @@ def importar_productos(request):
             )
 
         # ============================================================
+        # 14.5. CREAR / ACTUALIZAR SNAPSHOT DE LA BASE ACTIVA
+        # ============================================================
+        for producto in Producto.objects.select_related('ubicacion').all():
+
+            BaseProducto.objects.update_or_create(
+                base=base_activa,
+                producto=producto,
+                defaults={
+                    'codigo_barras': producto.codigo_barras,
+                    'descripcion': producto.descripcion,
+                    'stock_teorico': producto.stock_teorico,
+                    'rack': producto.ubicacion.rack if producto.ubicacion else '',
+                    'espacio': producto.ubicacion.espacio if producto.ubicacion else '',
+                    'nivel': producto.ubicacion.nivel if producto.ubicacion else '',
+                }
+            )
+
+        # ============================================================
         # 15. AUDITORÍA
         # ============================================================
 
@@ -598,5 +617,42 @@ def crear_producto(request):
         'inventario/crear_producto.html',
         {
             'form': form
+        }
+    )
+
+@login_required
+def editar_producto(request, producto_id):
+    producto = get_object_or_404(Producto, id=producto_id)
+
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=producto)
+
+        if form.is_valid():
+            producto = form.save()
+
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='MODIFICAR',
+                modelo='Producto',
+                objeto_id=str(producto.id),
+                descripcion=f'Modificación manual de producto: {producto.codigo_barras}',
+                ip_direccion=get_client_ip(request)
+            )
+
+            messages.success(
+                request,
+                f'Producto "{producto.descripcion}" actualizado correctamente.'
+            )
+
+            return redirect('inventario:lista_productos')
+    else:
+        form = ProductoForm(instance=producto)
+
+    return render(
+        request,
+        'inventario/editar_producto.html',
+        {
+            'form': form,
+            'producto': producto,
         }
     )

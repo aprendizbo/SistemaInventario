@@ -15,6 +15,7 @@ from .productos import (
     importar_productos,
     exportar_excel,
     crear_producto,
+    editar_producto,
 )
 
 from .novedades import (
@@ -25,8 +26,8 @@ from .novedades import (
 
 from .reportes import (
     exportar_conteo_csv,
-    conciliacion_sesion,
-    aplicar_ajuste_inventario,
+    conciliacion_base,
+    aplicar_conciliacion_base,
 )
 
 from .usuarios import (

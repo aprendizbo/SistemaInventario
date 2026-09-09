@@ -8,6 +8,7 @@ from django.db.models import Sum
 
 from ..models import (
     BaseInventario,
+    BaseProducto,
     Producto,
     ConteoDetalle,
     HistorialProducto,
@@ -61,11 +62,13 @@ def bases_productos(request):
 @require_POST
 def crear_base_inventario(request):
 
-    if request.method != 'POST':
-        return redirect('inventario:panel_sesiones')
+    # ============================================================
+    # 1. VERIFICAR BASE ACTIVA
+    # ============================================================
 
-    # Verificar si ya existe una base activa
-    base_existente = BaseInventario.objects.filter(estado='ACTIVA').first()
+    base_existente = BaseInventario.objects.filter(
+        estado='ACTIVA'
+    ).first()
 
     if base_existente:
         messages.error(
@@ -73,36 +76,132 @@ def crear_base_inventario(request):
             f'Ya existe una base activa: "{base_existente.nombre}". '
             f'Debe cerrarla antes de crear una nueva.'
         )
-        return redirect('inventario:panel_sesiones')
+        return redirect('inventario:bases_productos')
 
-    nombre = request.POST.get('nombre_base', '').strip()
+    # ============================================================
+    # 2. NOMBRE
+    # ============================================================
+
+    nombre = request.POST.get(
+        'nombre_base',
+        ''
+    ).strip()
 
     if not nombre:
-        fecha = timezone.now().strftime('%d/%m/%Y %H:%M')
+        fecha = timezone.now().strftime(
+            '%d/%m/%Y %H:%M'
+        )
+
         nombre = f'Base de Inventario - {fecha}'
 
-    base = BaseInventario.objects.create(
-        nombre=nombre,
-        estado='ACTIVA',
-        creado_por=request.user
-    )
+    try:
 
-    LogAuditoria.objects.create(
-        usuario=request.user,
-        accion='CREAR',
-        modelo='BaseInventario',
-        objeto_id=str(base.id),
-        descripcion=f'Se creó la base de inventario "{base.nombre}".',
-        ip_direccion=get_client_ip(request)
-    )
+        with transaction.atomic():
 
-    messages.success(
-        request,
-        f'Base "{base.nombre}" creada correctamente.'
-    )
+            # ====================================================
+            # 3. CREAR CABECERA DE BASE
+            # ====================================================
 
-    # 👇 AQUÍ ESTÁ EL CAMBIO SOLICITADO 👇
-    return redirect('inventario:bases_productos')
+            base = BaseInventario.objects.create(
+                nombre=nombre,
+                estado='ACTIVA',
+                creado_por=request.user
+            )
+
+            # ====================================================
+            # 4. TOMAR FOTOGRAFÍA DEL MAESTRO
+            # ====================================================
+
+            productos = Producto.objects.select_related(
+                'ubicacion'
+            ).all()
+
+            bases_productos = []
+
+            for producto in productos:
+
+                ubicacion = producto.ubicacion
+
+                bases_productos.append(
+                    BaseProducto(
+                        base=base,
+                        producto=producto,
+                        codigo_barras=producto.codigo_barras,
+                        descripcion=producto.descripcion,
+                        stock_teorico=producto.stock_teorico,
+
+                        rack=(
+                            ubicacion.rack
+                            if ubicacion
+                            else ''
+                        ),
+
+                        espacio=(
+                            ubicacion.espacio
+                            if ubicacion
+                            else ''
+                        ),
+
+                        nivel=(
+                            ubicacion.nivel
+                            if ubicacion
+                            else ''
+                        ),
+                    )
+                )
+
+            # ====================================================
+            # 5. GUARDAR SNAPSHOT
+            # ====================================================
+
+            if bases_productos:
+
+                BaseProducto.objects.bulk_create(
+                    bases_productos,
+                    batch_size=500
+                )
+
+            # ====================================================
+            # 6. AUDITORÍA
+            # ====================================================
+
+            LogAuditoria.objects.create(
+                usuario=request.user,
+                accion='CREAR',
+                modelo='BaseInventario',
+                objeto_id=str(base.id),
+                descripcion=(
+                    f'Se creó la base de inventario '
+                    f'"{base.nombre}". '
+                    f'Se cargaron {len(bases_productos)} '
+                    f'productos como snapshot de la base.'
+                ),
+                ip_direccion=get_client_ip(request)
+            )
+
+        # ========================================================
+        # 7. MENSAJE
+        # ========================================================
+
+        messages.success(
+            request,
+            (
+                f'Base "{base.nombre}" creada correctamente. '
+                f'Se cargaron {len(bases_productos)} productos '
+                f'en la base.'
+            )
+        )
+
+    except Exception as e:
+
+        messages.error(
+            request,
+            f'No fue posible crear la base: {str(e)}'
+        )
+
+    return redirect(
+        'inventario:bases_productos'
+    )
 
 
 # ============================================================
@@ -171,27 +270,19 @@ def cerrar_base_inventario(request, base_id):
 
             for producto in productos:
 
-                cantidad_contada = 0
+                # ========================================================
+                # FOTOGRAFÍA FINAL DEL MAESTRO
+                # ========================================================
+                # El histórico representa el estado final del inventario
+                # al momento de cerrar la base.
+                #
+                # NO se suman los conteos de las diferentes sesiones,
+                # porque cada sesión es un conteo independiente.
+                # ========================================================
 
-                for sesion in sesiones.filter(
-                    estado='CERRADA'
-                ):
+                cantidad_contada = producto.stock_teorico
 
-                    total = (
-                        producto.conteos
-                        .filter(sesion=sesion)
-                        .aggregate(
-                            total=Sum('cantidad')
-                        )['total']
-                        or 0
-                    )
-
-                    cantidad_contada += total
-
-                diferencia = (
-                    cantidad_contada -
-                    producto.stock_teorico
-                )
+                diferencia = 0
 
                 HistorialProducto.objects.create(
                     base=base,

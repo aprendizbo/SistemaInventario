@@ -1,0 +1,769 @@
+{% extends "inventario/base.html" %}
+
+{% block title %}Conciliación de Inventario{% endblock %}
+
+{% block content %}
+
+<style>
+    .conciliacion-container {
+        max-width: 1500px;
+        margin: 0 auto;
+        padding: 30px 20px 50px;
+    }
+
+    /* HEADER */
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .page-title {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 700;
+        color: #102a43;
+    }
+
+    .page-subtitle {
+        margin-top: 6px;
+        color: #627d98;
+        font-size: 15px;
+    }
+
+    .base-name {
+        color: #102a43;
+        font-weight: 700;
+    }
+
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 16px;
+        border-radius: 9px;
+        background: #f1f5f9;
+        color: #334e68;
+        text-decoration: none;
+        font-weight: 600;
+        border: 1px solid #d9e2ec;
+        transition: .2s;
+    }
+
+    .btn-back:hover {
+        background: #e2e8f0;
+        color: #102a43;
+    }
+
+    /* RESUMEN */
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 25px;
+    }
+
+    .summary-card {
+        background: white;
+        border: 1px solid #e1e8ed;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 8px rgba(16, 42, 67, .05);
+    }
+
+    .summary-label {
+        font-size: 13px;
+        color: #627d98;
+        margin-bottom: 6px;
+    }
+
+    .summary-value {
+        font-size: 25px;
+        font-weight: 700;
+        color: #102a43;
+    }
+
+    /* SECCIONES */
+    .section-card {
+        background: white;
+        border: 1px solid #e1e8ed;
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(16, 42, 67, .06);
+        margin-bottom: 25px;
+        overflow: hidden;
+    }
+
+    .section-header {
+        padding: 18px 22px;
+        border-bottom: 1px solid #e6edf2;
+        background: #f8fafc;
+    }
+
+    .section-header h3 {
+        margin: 0;
+        color: #102a43;
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .section-header p {
+        margin: 4px 0 0;
+        color: #829ab1;
+        font-size: 13px;
+    }
+
+    .section-body {
+        padding: 20px;
+    }
+
+    /* SESIONES */
+    .sessions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 15px;
+    }
+
+    .session-card {
+        border: 1px solid #d9e2ec;
+        border-radius: 11px;
+        padding: 16px;
+        background: #ffffff;
+    }
+
+    .session-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 13px;
+    }
+
+    .session-number {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #e6f0f7;
+        color: #102a43;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .session-name {
+        font-weight: 700;
+        color: #243b53;
+        font-size: 14px;
+        line-height: 1.4;
+        flex: 1;
+    }
+
+    .session-data {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        border-top: 1px solid #edf2f7;
+        padding-top: 12px;
+    }
+
+    .session-data-item span {
+        display: block;
+        font-size: 11px;
+        color: #829ab1;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+
+    .session-data-item strong {
+        color: #334e68;
+        font-size: 13px;
+    }
+
+    /* TABLA */
+    .table-wrapper {
+        overflow-x: auto;
+        border: 1px solid #e1e8ed;
+        border-radius: 10px;
+    }
+
+    .conciliation-table {
+        width: 100%;
+        min-width: 1050px;
+        border-collapse: collapse;
+        background: white;
+    }
+
+    .conciliation-table th {
+        background: #102a43;
+        color: white;
+        padding: 13px 12px;
+        text-align: left;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        white-space: nowrap;
+    }
+
+    .conciliation-table td {
+        padding: 14px 12px;
+        border-bottom: 1px solid #edf2f7;
+        color: #334e68;
+        font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .conciliation-table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    .conciliation-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+    .codigo {
+        font-weight: 700;
+        color: #102a43;
+        white-space: nowrap;
+    }
+
+    .producto {
+        font-weight: 600;
+        color: #243b53;
+        min-width: 180px;
+    }
+
+    .stock {
+        font-size: 16px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .conteo {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+    .conteo small {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    /* BADGES */
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .badge-success {
+        background: #def7ec;
+        color: #046c4e;
+    }
+
+    .badge-warning {
+        background: #fdf6b2;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background: #fde8e8;
+        color: #c81e1e;
+    }
+
+    .badge-neutral {
+        background: #edf2f7;
+        color: #627d98;
+    }
+
+    .badge-blue {
+        background: #e1effe;
+        color: #1e429f;
+    }
+
+    .status-cell {
+        text-align: center;
+        min-width: 130px;
+    }
+
+    .pending {
+        color: #829ab1;
+        font-size: 13px;
+        font-style: italic;
+    }
+
+    .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+        color: #829ab1;
+    }
+
+    .empty-state strong {
+        display: block;
+        color: #486581;
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+        .page-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .conciliacion-container {
+            padding: 20px 12px 40px;
+        }
+
+        .page-title {
+            font-size: 23px;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .sessions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-body {
+            padding: 12px;
+        }
+
+        .section-header {
+            padding: 15px;
+        }
+    }
+</style>
+
+
+<div class="conciliacion-container">
+
+    <!-- ================= HEADER ================= -->
+
+    <div class="page-header">
+
+        <div>
+            <h1 class="page-title">
+                Conciliación de Inventario
+            </h1>
+
+            <div class="page-subtitle">
+                Base:
+                <span class="base-name">
+                    {{ base }}
+                </span>
+            </div>
+        </div>
+
+        <a href="{% url 'inventario:panel_sesiones' %}"
+           class="btn-back">
+            ← Volver a sesiones
+        </a>
+
+    </div>
+
+
+    <!-- ================= RESUMEN ================= -->
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+            <div class="summary-label">
+                Sesiones
+            </div>
+
+            <div class="summary-value">
+                {{ sesiones|length }}
+            </div>
+        </div>
+
+
+        <div class="summary-card">
+            <div class="summary-label">
+                Productos evaluados
+            </div>
+
+            <div class="summary-value">
+                {{ resultados|length }}
+            </div>
+        </div>
+
+
+        <div class="summary-card">
+            <div class="summary-label">
+                Tipo de proceso
+            </div>
+
+            <div class="summary-value"
+                 style="font-size:18px;">
+                Conciliación
+            </div>
+        </div>
+
+    </div>
+
+
+    <!-- ================= SESIONES ================= -->
+
+    <div class="section-card">
+
+        <div class="section-header">
+            <h3>
+                Sesiones utilizadas
+            </h3>
+
+            <p>
+                Cada sesión representa un conteo independiente realizado sobre esta base.
+            </p>
+        </div>
+
+
+        <div class="section-body">
+
+            {% if sesiones %}
+
+                <div class="sessions-grid">
+
+                    {% for sesion in sesiones %}
+
+                    <div class="session-card">
+
+                        <div class="session-top">
+
+                            <div class="session-number">
+                                {{ forloop.counter }}
+                            </div>
+
+                            <div class="session-name">
+                                {{ sesion.nombre }}
+                            </div>
+
+                            <span class="badge badge-blue">
+                                {{ sesion.get_estado_display|default:sesion.estado }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="session-data">
+
+                            <div class="session-data-item">
+                                <span>Usuario</span>
+
+                                <strong>
+                                    {% if sesion.usuario %}
+                                        {{ sesion.usuario }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </strong>
+                            </div>
+
+
+                            <div class="session-data-item">
+                                <span>Inicio</span>
+
+                                <strong>
+                                    {{ sesion.fecha_inicio|date:"d/m/Y H:i" }}
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <strong>No hay sesiones</strong>
+                    No existen sesiones asociadas a esta base.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= RESULTADOS ================= -->
+
+    <div class="section-card">
+
+        <div class="section-header">
+
+            <h3>
+                Resultados de conciliación
+            </h3>
+
+            <p>
+                Comparación entre los conteos realizados y el stock registrado en el sistema.
+            </p>
+
+        </div>
+
+
+        <div class="section-body">
+
+            {% if resultados %}
+
+                <div class="table-wrapper">
+
+                    <table class="conciliation-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Código</th>
+
+                                <th>Producto</th>
+
+                                <th class="text-center">
+                                    Stock sistema
+                                </th>
+
+                                {% for sesion in sesiones %}
+
+                                    <th class="text-center">
+                                        Conteo sesión {{ forloop.counter }}
+                                    </th>
+
+                                {% endfor %}
+
+                                <th class="text-center">
+                                    Consensuado
+                                </th>
+
+                                <th class="text-center">
+                                    Diferencia sistema
+                                </th>
+
+                                <th class="text-center">
+                                    Estado
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for resultado in resultados %}
+
+                            <tr>
+
+                                <!-- CÓDIGO -->
+
+                                <td class="codigo">
+                                    {{ resultado.producto.codigo_barras }}
+                                </td>
+
+
+                                <!-- PRODUCTO -->
+
+                                <td class="producto">
+                                    {{ resultado.producto.descripcion }}
+                                </td>
+
+
+                                <!-- STOCK SISTEMA -->
+
+                                <td class="stock">
+                                    {{ resultado.stock_sistema }}
+                                </td>
+
+
+                                <!-- CONTEOS -->
+
+                                {% for sesion in resultado.sesiones %}
+
+                                <td class="conteo">
+
+                                    {% if sesion.cantidad is not None %}
+
+                                        {{ sesion.cantidad }}
+
+                                        {% if sesion.diferencia is not None %}
+
+                                            {% if sesion.diferencia == 0 %}
+
+                                                <small>
+                                                    <span class="badge badge-success">
+                                                        ✓ Coincide
+                                                    </span>
+                                                </small>
+
+                                            {% elif sesion.diferencia > 0 %}
+
+                                                <small>
+                                                    <span class="badge badge-warning">
+                                                        +{{ sesion.diferencia }}
+                                                    </span>
+                                                </small>
+
+                                            {% else %}
+
+                                                <small>
+                                                    <span class="badge badge-danger">
+                                                        {{ sesion.diferencia }}
+                                                    </span>
+                                                </small>
+
+                                            {% endif %}
+
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <span class="pending">
+                                            Sin conteo
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                {% endfor %}
+
+
+                                <!-- CONSENSUADO -->
+
+                                <td class="text-center">
+
+                                    {% if resultado.conteo_consensuado is not None %}
+
+                                        <span class="badge badge-blue"
+                                              style="font-size:13px;">
+                                            {{ resultado.conteo_consensuado }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="pending">
+                                            Pendiente
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- DIFERENCIA SISTEMA -->
+
+                                <td class="text-center">
+
+                                    {% if resultado.diferencia_sistema is not None %}
+
+                                        {% if resultado.diferencia_sistema == 0 %}
+
+                                            <span class="badge badge-success">
+                                                0
+                                            </span>
+
+                                        {% elif resultado.diferencia_sistema > 0 %}
+
+                                            <span class="badge badge-warning">
+                                                +{{ resultado.diferencia_sistema }}
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="badge badge-danger">
+                                                {{ resultado.diferencia_sistema }}
+                                            </span>
+
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <span class="pending">
+                                            Pendiente
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <!-- ESTADO -->
+
+                                <td class="status-cell">
+
+                                    {% if resultado.estado == "OK" %}
+
+                                        <span class="badge badge-success">
+                                            ✓ OK
+                                        </span>
+
+                                    {% elif resultado.estado == "DIFERENCIA" %}
+
+                                        <span class="badge badge-danger">
+                                            ⚠ Diferencia
+                                        </span>
+
+                                    {% elif resultado.estado == "UN_SOLO_CONTEO" %}
+
+                                        <span class="badge badge-warning">
+                                            Un solo conteo
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge badge-neutral">
+                                            {{ resultado.estado }}
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+                    <strong>No hay resultados</strong>
+                    No existen productos para conciliar en esta base.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

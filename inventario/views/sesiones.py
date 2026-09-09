@@ -80,36 +80,6 @@ def crear_sesion(request):
         )
 
     # ========================================================
-    # VALIDAR SESIÓN ABIERTA EN ESA BASE
-    # ========================================================
-
-    sesion_abierta = (
-        SesionInventario.objects
-        .filter(
-            base=base_activa,
-            estado='ABIERTA'
-        )
-        .order_by('-id')
-        .first()
-    )
-
-    if sesion_abierta:
-
-        messages.error(
-            request,
-            (
-                f'Ya existe una sesión abierta para la base '
-                f'"{base_activa.nombre}": '
-                f'"{sesion_abierta.nombre}". '
-                f'Debe finalizarla antes de abrir otra.'
-            )
-        )
-
-        return redirect(
-            'inventario:panel_sesiones'
-        )
-
-    # ========================================================
     # NOMBRE AUTOMÁTICO
     # ========================================================
 

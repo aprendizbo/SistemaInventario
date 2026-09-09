@@ -119,6 +119,7 @@
                         <th class="px-6 py-4">Descripción del Producto</th>
                         <th class="px-6 py-4 text-center">Stock Teórico</th>
                         <th class="px-6 py-4 text-center">Zonificación (R / E / N)</th>
+                        <th class="px-6 py-4 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
@@ -140,10 +141,16 @@
                                 {% endif %}
                             </span>
                         </td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{% url 'inventario:editar_producto' producto.id %}"
+                               class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded-lg shadow-sm transition-colors text-xs">
+                                ✏️ Editar
+                            </a>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">
+                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
                             No se encontraron coincidencias.
                         </td>
                     </tr>

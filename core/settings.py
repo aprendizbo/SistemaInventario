@@ -17,7 +17,11 @@ if not SECRET_KEY:
 DEBUG = True  # Modificado temporalmente para depurar y ver el error real
 
 # 3. ALLOWED_HOSTS: Lista permitida.
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1').split(',')
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+    '172.16.40.183',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
