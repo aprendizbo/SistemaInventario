@@ -60,8 +60,16 @@
                 </div>
             </div>
 
-            <!-- Alerta de resultado principal -->
-            <div id="resultado" class="animacion-suave hidden max-w-md mx-auto rounded-xl p-4 border text-sm font-medium"></div>
+            <!-- Alerta de resultado principal (Estructura estática para evitar XSS con innerHTML) -->
+            <div id="resultado" class="hidden animacion-suave max-w-md mx-auto rounded-xl p-4 border text-sm font-medium">
+                <div class="flex items-center space-x-2">
+                    <span id="resultado-icono" class="text-base"></span>
+                    <div>
+                        <p id="resultado-titulo" class="font-bold"></p>
+                        <p id="resultado-mensaje" class="text-xs mt-0.5"></p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Panel de Último Producto Escaneado -->
             <div id="ultimo-producto" class="hidden max-w-md mx-auto rounded-xl p-5 border border-slate-200 bg-slate-50 shadow-sm mt-4">
@@ -74,24 +82,18 @@
                     <p id="up-codigo" class="text-right font-mono">-</p>
                     
                     <p><strong>Descripción:</strong></p>
-                    <p id="up-descripcion" class="text-right font-bold">-</p>
+                    <p id="up-descripcion" class="text-right font-bold truncate">-</p>
                     
-                    <p><strong>Rack:</strong></p>
-                    <p id="up-rack" class="text-right">-</p>
+                    <p><strong>Ubicación:</strong></p>
+                    <p id="up-ubicacion" class="text-right">-</p>
                     
-                    <p><strong>Espacio:</strong></p>
-                    <p id="up-espacio" class="text-right">-</p>
+                    <hr class="col-span-2 my-1">
                     
-                    <p><strong>Nivel:</strong></p>
-                    <p id="up-nivel" class="text-right">-</p>
-                    
-                    <hr class="col-span-2">
+                    <p><strong>Contado Total:</strong></p>
+                    <p id="up-contado" class="text-right font-bold text-boccherini-blue text-lg">-</p>
                     
                     <p><strong>Stock Teórico:</strong></p>
                     <p id="up-stock" class="text-right">-</p>
-                    
-                    <p><strong>Contado:</strong></p>
-                    <p id="up-contado" class="text-right">-</p>
                     
                     <p><strong>Diferencia:</strong></p>
                     <p id="up-diferencia" class="text-right font-bold">-</p>
@@ -149,10 +151,21 @@
     const tbodyHistorial = document.getElementById('historial-rows');
     const panelUltimoProducto = document.getElementById('ultimo-producto');
 
-    document.body.addEventListener('click', (e) => {
-        if (e.target !== inputMultiplicador) {
-            inputCodigo.focus();
-        }
+    // Nodos para alertas estáticas
+    const resIcono = document.getElementById('resultado-icono');
+    const resTitulo = document.getElementById('resultado-titulo');
+    const resMensaje = document.getElementById('resultado-mensaje');
+
+    let isProcessing = false; // Lock de concurrencia frontend
+
+    // Gestión inteligente del foco (sin el setInterval agresivo)
+    inputCodigo.addEventListener('blur', (e) => {
+        // Un ligero timeout permite al navegador registrar qué elemento recibió el clic nuevo
+        setTimeout(() => {
+            if (document.activeElement !== inputMultiplicador) {
+                inputCodigo.focus();
+            }
+        }, 50);
     });
 
     document.addEventListener('keydown', function(e) {
@@ -189,6 +202,8 @@
     inputCodigo.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault(); 
+            if (isProcessing) return; // Evitar ráfagas rápidas de la PDA
+
             let codigo = inputCodigo.value.trim();
             let cantidad = parseInt(inputMultiplicador.value) || 1;
             
@@ -198,7 +213,31 @@
         }
     });
 
+    function mostrarAlerta(tipo, titulo, mensaje) {
+        divResultado.className = 'animacion-suave max-w-md mx-auto rounded-xl p-4 border text-sm font-medium';
+        divResultado.classList.remove('hidden');
+
+        if (tipo === 'ok') {
+            divResultado.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+            resIcono.textContent = '✅';
+            resMensaje.className = 'text-xs text-emerald-600 mt-0.5 font-bold';
+        } else if (tipo === 'novedad') {
+            divResultado.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
+            resIcono.textContent = '⚠️';
+            resMensaje.className = 'text-xs text-amber-700 mt-0.5';
+        } else {
+            divResultado.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
+            resIcono.textContent = '❌';
+            resMensaje.className = 'text-xs text-rose-700 mt-0.5';
+        }
+
+        resTitulo.textContent = titulo;
+        resMensaje.textContent = mensaje;
+    }
+
     function procesarCodigo(codigo, cantidad) {
+        isProcessing = true;
+
         fetch('/inventario/procesar-escaneo/', {
             method: 'POST',
             headers: {
@@ -211,120 +250,133 @@
                 'cantidad': cantidad
             })
         })
-        .then(response => response.json())
+        .then(async response => {
+            const data = await response.json().catch(() => ({})); // Captura si el servidor devuelve HTML en error 500
+            if (!response.ok) {
+                // Maneja explícitamente códigos 400 y 500 (Errores esperados desde Python)
+                throw new Error(data.message || 'Ocurrió un error en el servidor.');
+            }
+            return data;
+        })
         .then(data => {
-            divResultado.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-amber-50', 'text-amber-800', 'border-amber-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200');
-            
             if (data.status === 'ok') {
-                divResultado.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
-                divResultado.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="text-base">✅</span>
-                        <div>
-                            <p class="font-bold">${data.message}</p>
-                            <p class="text-xs text-emerald-600 mt-0.5">
-                                Contado: <span class="font-bold">${data.cantidad}</span> 
-                                <span class="mx-2 text-emerald-400/50">|</span> 
-                                Esperado: <span class="font-bold">${data.stock_teorico}</span>
-                            </p>
-                        </div>
-                    </div>`;
-
-                panelUltimoProducto.classList.remove('hidden');
-                document.getElementById('up-codigo').innerText = data.codigo || '-';
-                document.getElementById('up-descripcion').innerText = data.producto || '-';
-                document.getElementById('up-rack').innerText = data.rack || '-';
-                document.getElementById('up-espacio').innerText = data.espacio || '-';
-                document.getElementById('up-nivel').innerText = data.nivel || '-';
+                mostrarAlerta('ok', 'Escaneo Exitoso', data.message);
                 
+                // Llenar panel último producto 
+                panelUltimoProducto.classList.remove('hidden');
+                document.getElementById('up-codigo').textContent = data.codigo || '-';
+                document.getElementById('up-descripcion').textContent = data.producto || '-';
+                
+                // Formatear Ubicación
+                const ubicacionStr = [data.rack, data.espacio, data.nivel]
+                    .filter(val => val && val.trim() !== '')
+                    .join(' - ');
+                document.getElementById('up-ubicacion').textContent = ubicacionStr || 'No asignada';
+                
+                // Matemáticas seguras
                 let stockTeorico = parseInt(data.stock_teorico || 0);
                 let cantContada = parseInt(data.cantidad || 0);
                 let diferencia = cantContada - stockTeorico;
                 
-                document.getElementById('up-stock').innerText = stockTeorico;
-                document.getElementById('up-contado').innerText = cantContada;
+                document.getElementById('up-stock').textContent = stockTeorico;
+                document.getElementById('up-contado').textContent = cantContada;
                 
                 const diferenciaSpan = document.getElementById('up-diferencia');
                 const estadoSpan = document.getElementById('up-estado');
                 
-                diferenciaSpan.innerText = diferencia;
+                diferenciaSpan.textContent = diferencia > 0 ? `+${diferencia}` : diferencia;
                 
                 if (diferencia === 0) {
                     diferenciaSpan.className = "text-right font-bold text-emerald-600";
-                    estadoSpan.innerHTML = "🟢 EXACTO";
+                    estadoSpan.textContent = "🟢 EXACTO";
+                    estadoSpan.className = "text-right font-bold text-emerald-600";
                 } else if (diferencia > 0) {
                     diferenciaSpan.className = "text-right font-bold text-blue-600";
-                    estadoSpan.innerHTML = "🔵 SOBRANTE";
+                    estadoSpan.textContent = "🔵 SOBRANTE";
+                    estadoSpan.className = "text-right font-bold text-blue-600";
                 } else {
                     diferenciaSpan.className = "text-right font-bold text-red-600";
-                    estadoSpan.innerHTML = "🔴 FALTANTE";
+                    estadoSpan.textContent = "🔴 FALTANTE";
+                    estadoSpan.className = "text-right font-bold text-red-600";
                 }
 
-                const filaVacia = document.getElementById('fila-vacia');
-                if (filaVacia) filaVacia.remove();
-
-                let filaExistente = Array.from(tbodyHistorial.children).find(row => row.cells[0]?.textContent === data.codigo);
-
-                if (filaExistente) {
-                    filaExistente.cells[2].textContent = data.cantidad;
-                    filaExistente.className = "hover:bg-slate-50/50 transition-colors bg-amber-50 animate-pulse";
-                    tbodyHistorial.insertBefore(filaExistente, tbodyHistorial.firstChild);
-                    setTimeout(() => { filaExistente.className = "hover:bg-slate-50/50 transition-colors"; }, 1500);
-                } else {
-                    const nuevaFila = document.createElement('tr');
-                    nuevaFila.className = "hover:bg-slate-50/50 transition-colors bg-amber-50 animate-pulse";
-                    nuevaFila.innerHTML = `
-                        <td class="px-6 py-3 font-mono text-xs font-semibold text-slate-500">${data.codigo}</td>
-                        <td class="px-6 py-3 font-medium text-slate-800">${data.producto}</td>
-                        <td class="px-6 py-3 text-right font-bold text-boccherini-blue">${data.cantidad}</td>
-                    `;
-                    tbodyHistorial.insertBefore(nuevaFila, tbodyHistorial.firstChild);
-                    
-                    if (tbodyHistorial.children.length > 5) {
-                        tbodyHistorial.removeChild(tbodyHistorial.lastChild);
-                    }
-                    setTimeout(() => { nuevaFila.className = "hover:bg-slate-50/50 transition-colors"; }, 1500);
-                }
+                actualizarTablaHistorial(data.codigo, data.producto, data.cantidad, false);
 
             } else if (data.status === 'novedad') {
-                divResultado.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
-                divResultado.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="text-base">⚠️</span>
-                        <div>
-                            <p class="font-bold">Novedad registrada</p>
-                            <p class="text-xs text-amber-700 mt-0.5">${data.message}</p>
-                        </div>
-                    </div>`;
-            } else {
-                divResultado.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200');
-                divResultado.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="text-base">❌</span>
-                        <div>
-                            <p class="font-bold">Error del Servidor</p>
-                            <p class="text-xs text-rose-700 mt-0.5">${data.message}</p>
-                        </div>
-                    </div>`;
+                mostrarAlerta('novedad', 'Novedad registrada', data.message);
+                actualizarTablaHistorial(data.codigo, '⚠️ PRODUCTO NO REGISTRADO', data.cantidad, true);
+                panelUltimoProducto.classList.add('hidden'); // Ocultar panel detallado si no es un producto
             }
-            
-            inputCodigo.value = '';
-            inputMultiplicador.value = '1';
-            inputCodigo.focus();
         })
         .catch(error => {
             console.error('Error:', error);
-            divResultado.classList.remove('hidden');
-            divResultado.className = 'animacion-suave max-w-md mx-auto rounded-xl p-4 border text-sm font-medium bg-rose-50 text-rose-800 border-rose-200';
-            divResultado.innerHTML = `❌ Error Crítico: No hay comunicación de red con Django.`;
+            mostrarAlerta('error', 'Error del Sistema', error.message);
+        })
+        .finally(() => {
+            // Limpieza general post-proceso
+            inputCodigo.value = '';
+            inputMultiplicador.value = '1';
+            inputCodigo.focus();
+            isProcessing = false; // Liberar lock
         });
     }
 
-    // Mantener foco permanente PDA
-    setInterval(() => {
-        if (document.activeElement !== inputMultiplicador) {
-            inputCodigo.focus();
+    function actualizarTablaHistorial(codigo, descripcion, cantidad, isNovedad) {
+        const filaVacia = document.getElementById('fila-vacia');
+        if (filaVacia) filaVacia.remove();
+
+        // Buscar si ya existe la fila
+        let filaExistente = Array.from(tbodyHistorial.children).find(
+            row => row.children[0]?.textContent === codigo
+        );
+
+        if (filaExistente) {
+            // Actualizar fila existente (seguro contra XSS usando textContent)
+            filaExistente.children[2].textContent = cantidad;
+            
+            // Animación de pulso
+            filaExistente.className = "transition-colors bg-amber-50 animate-pulse";
+            tbodyHistorial.insertBefore(filaExistente, tbodyHistorial.firstChild);
+            
+            setTimeout(() => { 
+                filaExistente.className = "hover:bg-slate-50/50 transition-colors"; 
+            }, 1500);
+
+        } else {
+            // Crear nueva fila limpiamente
+            const tr = document.createElement('tr');
+            tr.className = "transition-colors bg-amber-50 animate-pulse";
+
+            const tdCodigo = document.createElement('td');
+            tdCodigo.className = "px-6 py-3 font-mono text-xs font-semibold text-slate-500";
+            tdCodigo.textContent = codigo;
+
+            const tdDesc = document.createElement('td');
+            tdDesc.className = isNovedad 
+                ? "px-6 py-3 font-bold text-amber-600" 
+                : "px-6 py-3 font-medium text-slate-800";
+            tdDesc.textContent = descripcion;
+
+            const tdCant = document.createElement('td');
+            tdCant.className = "px-6 py-3 text-right font-bold text-boccherini-blue";
+            tdCant.textContent = cantidad;
+
+            tr.appendChild(tdCodigo);
+            tr.appendChild(tdDesc);
+            tr.appendChild(tdCant);
+
+            tbodyHistorial.insertBefore(tr, tbodyHistorial.firstChild);
+
+            // Mantener solo las últimas 5 filas
+            if (tbodyHistorial.children.length > 5) {
+                tbodyHistorial.removeChild(tbodyHistorial.lastChild);
+            }
+
+            // Quitar el color de pulso
+            setTimeout(() => { 
+                tr.className = "hover:bg-slate-50/50 transition-colors"; 
+            }, 1500);
         }
-    }, 1000);
+    }
 </script>
 {% endblock %}

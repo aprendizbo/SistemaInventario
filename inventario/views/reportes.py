@@ -1,281 +1,194 @@
 import csv
-from django.http import HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from collections import defaultdict
+
 from django.contrib import messages
-from django.views.decorators.http import require_POST
-from django.db import transaction
+from django.contrib.auth.decorators import login_required
+from django.db import transaction, models
 from django.db.models import Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from ..models import (
+    BaseInventario,
     SesionInventario,
     Producto,
     ConteoDetalle,
+    HistorialProducto,
     LogAuditoria,
 )
-
 from .bases import get_client_ip
 
 
 # ============================================================
-# EXPORTAR CONTEO DE UNA SESIÓN
+# EXPORTAR CONTEO DE UNA SESIÓN (Se mantiene por sesión)
 # ============================================================
-
 @login_required
 def exportar_conteo_csv(request, sesion_id):
-
-    sesion = get_object_or_404(
-        SesionInventario,
-        id=sesion_id
-    )
-
-    LogAuditoria.objects.create(
-        usuario=request.user,
-        accion='EXPORTAR',
-        modelo='ConteoDetalle',
-        objeto_id=str(sesion.id),
-        descripcion=(
-            f"Exportación CSV sesión: {sesion.nombre}"
-        ),
-        ip_direccion=get_client_ip(request)
-    )
-
-    response = HttpResponse(
-        content_type='text/csv; charset=utf-8'
-    )
-
-    response['Content-Disposition'] = (
-        f'attachment; filename="historial_sesion_{sesion_id}.csv"'
-    )
-
-    writer = csv.writer(response)
-
+    sesion = get_object_or_404(SesionInventario.objects.select_related('base', 'creado_por'), id=sesion_id)
+    
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    response['Content-Disposition'] = f'attachment; filename="sesion_{sesion.id}_conteo.csv"'
+    writer = csv.writer(response, delimiter=';')
     writer.writerow([
-        'ID Sesion',
-        'Nombre Sesion',
-        'Codigo de Barras',
-        'Descripcion',
-        'Stock Teorico',
-        'Cantidad',
-        'Operario',
-        'Fecha Conteo',
+        'ID Sesion', 'Nombre Sesion', 'Base', 'Estado Sesion', 'Usuario',
+        'Codigo de Barras', 'Descripcion', 'Stock Sistema', 'Cantidad Contada', 'Diferencia', 'Fecha Conteo'
     ])
 
-    conteos = ConteoDetalle.objects.filter(
-        sesion=sesion
-    ).select_related(
-        'producto',
-        'usuario'
-    )
-
+    conteos = ConteoDetalle.objects.filter(sesion=sesion).select_related('producto', 'usuario').order_by('producto__descripcion')
     for item in conteos:
-
+        diferencia = item.cantidad - item.producto.stock_teorico
         writer.writerow([
-            sesion.id,
-            sesion.nombre,
-            item.producto.codigo_barras,
-            item.producto.descripcion,
-            item.producto.stock_teorico,
-            item.cantidad,
-            item.usuario.username,
-            item.fecha_conteo.strftime(
-                '%Y-%m-%d %H:%M:%S'
-            ),
+            sesion.id, sesion.nombre, sesion.base.nombre if sesion.base else '', sesion.get_estado_display(),
+            item.usuario.username, item.producto.codigo_barras, item.producto.descripcion,
+            item.producto.stock_teorico, item.cantidad, diferencia, item.fecha_conteo.strftime('%Y-%m-%d %H:%M:%S')
         ])
 
+    LogAuditoria.objects.create(
+        usuario=request.user, accion='EXPORTAR', modelo='ConteoDetalle', objeto_id=str(sesion.id),
+        descripcion=f'Exportación CSV del conteo de la sesión "{sesion.nombre}".', ip_direccion=get_client_ip(request)
+    )
     return response
 
 
 # ============================================================
-# CONCILIACIÓN DE UNA SESIÓN
+# LÓGICA CORE: CONSTRUIR MATRIZ DE CONCILIACIÓN
 # ============================================================
+def construir_conciliacion_base(base):
+    sesiones = list(SesionInventario.objects.filter(base=base).select_related('creado_por').order_by('fecha_inicio'))
+    
+    # 1. Agrupar conteos: producto_id -> sesion_id -> cantidad total
+    conteos_db = ConteoDetalle.objects.filter(sesion__base=base).values('producto_id', 'sesion_id').annotate(total=Sum('cantidad'))
+    matriz = defaultdict(dict)
+    for c in conteos_db: matriz[c['producto_id']][c['sesion_id']] = c['total'] or 0
 
-@login_required
-def conciliacion_sesion(request, sesion_id):
-
-    sesion = get_object_or_404(
-        SesionInventario,
-        id=sesion_id
-    )
-
-    productos = Producto.objects.select_related(
-        'ubicacion'
-    ).all()
+    # 2. Obtener productos (los que tienen stock o fueron contados)
+    productos = Producto.objects.select_related('ubicacion').filter(
+        models.Q(stock_teorico__gt=0) | models.Q(id__in=matriz.keys())
+    ).distinct().order_by('descripcion')
 
     resultados = []
+    for prod in productos:
+        conteos_prod = matriz.get(prod.id, {})
+        sesiones_info = []
+        cantidades_validas = []
 
-    for producto in productos:
+        # Estructurar conteos por sesión (compatible con conciliacion_base.html)
+        for s in sesiones:
+            cant = conteos_prod.get(s.id)
+            dif = (cant - prod.stock_teorico) if cant is not None else None
+            sesiones_info.append({'sesion': s, 'cantidad': cant, 'diferencia': dif})
+            if cant is not None: cantidades_validas.append(cant)
 
-        cantidad_escaneada = (
-            producto.conteos
-            .filter(sesion=sesion)
-            .aggregate(
-                total=Sum('cantidad')
-            )['total']
-            or 0
-        )
+        # 3. Determinar Consenso (Mínimo 2 coincidencias idénticas)
+        frecuencias = defaultdict(int)
+        for c in cantidades_validas: frecuencias[c] += 1
+        
+        conteo_consensuado = None
+        max_freq = 0
+        for cant, freq in frecuencias.items():
+            if freq >= 2 and freq > max_freq:
+                max_freq, conteo_consensuado = freq, cant
 
-        diferencia = (
-            cantidad_escaneada -
-            producto.stock_teorico
-        )
+        # 4. Asignar Estado
+        if conteo_consensuado is not None: estado = 'CONSENSO'
+        elif not cantidades_validas: estado = 'SIN_CONTEO'
+        elif len(cantidades_validas) == 1: estado = 'UN_SOLO_CONTEO'
+        else: estado = 'DIFERENCIA'
 
-        if (
-            cantidad_escaneada > 0
-            or producto.stock_teorico > 0
-        ):
-            resultados.append({
-                'producto': producto,
-                'stock_teorico': producto.stock_teorico,
-                'cantidad_escaneada': cantidad_escaneada,
-                'diferencia': diferencia,
-            })
+        dif_sistema = (conteo_consensuado - prod.stock_teorico) if conteo_consensuado is not None else None
 
-    return render(
-        request,
-        'inventario/conciliacion.html',
-        {
-            'sesion': sesion,
-            'resultados': resultados,
-        }
-    )
+        resultados.append({
+            'producto': prod,
+            'stock_sistema': prod.stock_teorico,
+            'sesiones': sesiones_info,  # Usado por la plantilla
+            'conteo_consensuado': conteo_consensuado,
+            'diferencia_sistema': dif_sistema,
+            'estado': estado
+        })
+
+    return sesiones, resultados
 
 
 # ============================================================
-# APLICAR AJUSTE DEL INVENTARIO
+# VISTA: VER TABLA DE CONCILIACIÓN DE BASE
 # ============================================================
+@login_required
+def conciliacion_base(request, base_id):
+    base = get_object_or_404(BaseInventario, id=base_id)
+    sesiones, resultados = construir_conciliacion_base(base)
 
+    if not sesiones:
+        messages.warning(request, f'La base "{base.nombre}" aún no tiene sesiones de inventario.')
+
+    return render(request, 'inventario/conciliacion_base.html', {
+        'base': base,
+        'sesiones': sesiones,
+        'resultados': resultados,
+    })
+
+
+# ============================================================
+# VISTA: APLICAR CONCILIACIÓN FINAL AL MAESTRO
+# ============================================================
 @login_required
 @require_POST
-def aplicar_ajuste_inventario(request, sesion_id):
-    """
-    Aplica el resultado de una sesión de inventario
-    al maestro de productos.
+def aplicar_conciliacion_base(request, base_id):
+    base = get_object_or_404(BaseInventario, id=base_id)
 
-    Una sesión solo puede aplicarse una vez.
-    El proceso completo se ejecuta dentro de una transacción.
-    """
+    if base.estado != 'ACTIVA' or base.conciliacion_aplicada:
+        messages.error(request, 'La base no está activa o ya fue conciliada.')
+        return redirect('inventario:conciliacion_base', base_id=base.id)
 
-    sesion = get_object_or_404(
-        SesionInventario,
-        id=sesion_id
-    )
+    sesiones, resultados = construir_conciliacion_base(base)
 
-    # ============================================================
-    # 1. VALIDAR ESTADO DE LA SESIÓN
-    # ============================================================
+    # Validaciones de integridad
+    if len(sesiones) < 2 or any(s.estado == 'ABIERTA' for s in sesiones):
+        messages.error(request, 'No se puede conciliar: Deben existir al menos 2 sesiones y TODAS deben estar CERRADAS.')
+        return redirect('inventario:conciliacion_base', base_id=base.id)
 
-    if sesion.estado == 'CERRADA':
-        messages.error(
-            request,
-            'Esta sesión ya fue cerrada y no puede volver a aplicarse.'
-        )
-
-        return redirect(
-            'inventario:conciliacion',
-            sesion_id=sesion.id
-        )
-
-    # ============================================================
-    # 2. APLICAR EL INVENTARIO DENTRO DE UNA TRANSACCIÓN
-    # ============================================================
+    if any(r['conteo_consensuado'] is None for r in resultados):
+        messages.error(request, 'Todos los productos mostrados deben alcanzar un estado de CONSENSO para poder aplicar.')
+        return redirect('inventario:conciliacion_base', base_id=base.id)
 
     try:
-
         with transaction.atomic():
+            for item in resultados:
+                prod, cant, dif = item['producto'], item['conteo_consensuado'], item['diferencia_sistema']
 
-            productos = Producto.objects.select_related(
-                'ubicacion'
-            ).all()
-
-            productos_actualizados = 0
-
-            # ====================================================
-            # 3. RECORRER EL MAESTRO
-            # ====================================================
-
-            for producto in productos:
-
-                cantidad_escaneada = (
-                    producto.conteos
-                    .filter(sesion=sesion)
-                    .aggregate(
-                        total=Sum('cantidad')
-                    )['total'] or 0
+                # 1. Respaldar en Historial
+                ub = prod.ubicacion
+                HistorialProducto.objects.update_or_create(
+                    base=base, codigo_barras=prod.codigo_barras,
+                    defaults={
+                        'descripcion': prod.descripcion, 'stock_teorico': prod.stock_teorico,
+                        'rack': ub.rack if ub else '', 'espacio': ub.espacio if ub else '', 'nivel': ub.nivel if ub else '',
+                        'cantidad_contada': cant, 'diferencia': dif
+                    }
                 )
 
-                # =================================================
-                # Si el producto fue contado, actualizar stock.
-                #
-                # Si NO fue contado, NO modificamos su stock.
-                # Esto es importante para inventarios parciales.
-                # =================================================
+                # 2. Actualizar Maestro
+                prod.stock_teorico = cant
+                prod.save(update_fields=['stock_teorico'])
 
-                if cantidad_escaneada > 0:
+            # 3. Cerrar Base y Marcar
+            base.conciliacion_aplicada = True
+            base.fecha_conciliacion = timezone.now()
+            base.conciliado_por = request.user
+            base.estado = 'CERRADA'
+            base.save(update_fields=['conciliacion_aplicada', 'fecha_conciliacion', 'conciliado_por', 'estado'])
 
-                    producto.stock_teorico = cantidad_escaneada
-                    producto.save(
-                        update_fields=['stock_teorico']
-                    )
-
-                    productos_actualizados += 1
-
-            # ====================================================
-            # 4. CERRAR LA SESIÓN
-            # ====================================================
-
-            sesion.estado = 'CERRADA'
-            sesion.fecha_fin = timezone.now()
-
-            sesion.save(
-                update_fields=[
-                    'estado',
-                    'fecha_fin'
-                ]
-            )
-
-            # ====================================================
-            # 5. AUDITORÍA
-            # ====================================================
-
+            # 4. Auditar
             LogAuditoria.objects.create(
-                usuario=request.user,
-                accion='AJUSTE',
-                modelo='SesionInventario',
-                objeto_id=str(sesion.id),
-                descripcion=(
-                    f"Se aplicó el inventario de la sesión "
-                    f"'{sesion.nombre}'. "
-                    f"Productos actualizados: "
-                    f"{productos_actualizados}."
-                ),
+                usuario=request.user, accion='AJUSTE', modelo='BaseInventario', objeto_id=str(base.id),
+                descripcion=f'Conciliación aplicada a la base "{base.nombre}". Productos: {len(resultados)}.',
                 ip_direccion=get_client_ip(request)
             )
 
-        # ========================================================
-        # 6. MENSAJE FINAL
-        # ========================================================
-
-        messages.success(
-            request,
-            (
-                f'La sesión "{sesion.nombre}" fue aplicada '
-                f'correctamente. '
-                f'Se actualizaron {productos_actualizados} productos.'
-            )
-        )
+        messages.success(request, f'Conciliación de "{base.nombre}" aplicada con éxito. {len(resultados)} productos actualizados.')
 
     except Exception as e:
+        messages.error(request, f'Error crítico al aplicar: {str(e)}')
 
-        messages.error(
-            request,
-            (
-                'No fue posible aplicar el inventario. '
-                f'No se realizaron cambios. Error: {str(e)}'
-            )
-        )
-
-    return redirect(
-        'inventario:panel_sesiones'
-    )
+    return redirect('inventario:bases_productos')

@@ -1,46 +1,57 @@
 {% extends 'inventario/base.html' %}
 
-{% block title %}Conciliación | Boccherini{% endblock %}
+{% block title %}Conciliación de Base | Boccherini{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
+<div class="max-w-full mx-auto">
     
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <div>
-            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Conciliación de Inventario</h2>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Conciliación de Base General</h2>
             <p class="text-sm text-slate-500 mt-1">
-                Sesión: <span class="font-bold text-slate-700">{{ sesion.nombre }}</span> 
+                Base: <span class="font-bold text-slate-700">{{ base.nombre }}</span> 
                 | Estado: 
-                <span class="font-bold {% if sesion.estado == 'CERRADA' %}text-rose-600{% else %}text-emerald-600{% endif %}">
-                    {{ sesion.get_estado_display }}
+                <span class="font-bold {% if base.estado == 'CERRADA' %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                    {{ base.get_estado_display }}
                 </span>
             </p>
         </div>
         <div class="flex items-center gap-3">
-            <a href="{% url 'inventario:panel_sesiones' %}" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-colors text-sm">
-                Volver
+            <a href="{% url 'inventario:bases_productos' %}" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-colors text-sm">
+                Volver a Bases
             </a>
             
-            {% if sesion.estado == 'ABIERTA' %}
-            <form
-                action="{% url 'inventario:aplicar_ajuste' sesion.id %}"
-                method="POST"
-                onsubmit="return confirm(
-                    '¿Confirmas la aplicación del inventario?\n\n' +
-                    'Se actualizará el stock maestro con las cantidades físicas contadas y ' +
-                    'la sesión quedará cerrada.\n\n' +
-                    'Esta operación no podrá repetirse sobre esta sesión.'
-                );">
-                {% csrf_token %}
+            {% if base.estado == 'ACTIVA' %}
 
-                <button
-                    type="submit"
-                    class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-sm"
-                >
+                {% if not base.conciliacion_aplicada %}
+                <form
+                    action="{% url 'inventario:aplicar_conciliacion_base' base.id %}"
+                    method="POST"
+                    onsubmit="return confirm(
+                        '¿Confirmas la aplicación de la conciliación?\n\n' +
+                        'Esto registrará la conciliación final de la base.\n\n' +
+                        'Esta operación no podrá repetirse sobre esta base.'
+                    );">
+                    {% csrf_token %}
+            
+                    <button
+                        type="submit"
+                        class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-sm"
+                    >
+                        <span>✓</span>
+                        <span>Aplicar Conciliación</span>
+                    </button>
+                </form>
+            
+                {% else %}
+            
+                <span class="inline-flex items-center space-x-2 bg-emerald-100 text-emerald-700 font-bold px-5 py-2.5 rounded-xl text-sm border border-emerald-200">
                     <span>✓</span>
-                    <span>Aplicar inventario y cerrar sesión</span>
-                </button>
-            </form>
+                    <span>Conciliación Aplicada</span>
+                </span>
+            
+                {% endif %}
+            
             {% endif %}
         </div>
     </div>
@@ -61,35 +72,61 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-slate-800 text-white text-xs font-bold uppercase tracking-wider">
-                        <th class="px-6 py-4">Código</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Código</th>
                         <th class="px-6 py-4">Producto</th>
-                        <th class="px-6 py-4 text-center bg-slate-700">Stock Sistema</th>
-                        <th class="px-6 py-4 text-center bg-slate-700">Físico Escaneado</th>
-                        <th class="px-6 py-4 text-center">Diferencia</th>
+                        <th class="px-6 py-4 text-center bg-slate-700 border-r border-slate-600">Stock Sistema</th>
+                        
+                        <!-- Columnas dinámicas según el número de sesiones en la base -->
+                        {% for sesion in sesiones %}
+                        <th class="px-6 py-4 text-center bg-slate-700/80">{{ sesion.nombre }}</th>
+                        {% endfor %}
+                        
+                        <th class="px-6 py-4 text-center bg-slate-800 border-l border-slate-600">Estado</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
                     {% for item in resultados %}
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 font-mono font-bold text-slate-700">{{ item.producto.codigo_barras }}</td>
-                        <td class="px-6 py-4 text-slate-600">{{ item.producto.descripcion }}</td>
-                        <td class="px-6 py-4 text-center font-bold text-slate-400">{{ item.stock_teorico }}</td>
-                        <td class="px-6 py-4 text-center font-bold text-boccherini-blue">{{ item.cantidad_escaneada }}</td>
+                        <td class="px-6 py-4 font-mono font-bold text-slate-700 whitespace-nowrap">{{ item.producto.codigo_barras }}</td>
+                        <td class="px-6 py-4 text-slate-600 min-w-[200px]">{{ item.producto.descripcion }}</td>
+                        <td class="px-6 py-4 text-center font-bold text-slate-400 border-r border-slate-100">{{ item.stock_sistema }}</td>
                         
-                        <td class="px-6 py-4 text-center font-bold">
-                            {% if item.diferencia > 0 %}
-                                <span class="text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+{{ item.diferencia }} (Sobra)</span>
-                            {% elif item.diferencia < 0 %}
-                                <span class="text-rose-600 bg-rose-50 px-2 py-1 rounded">{{ item.diferencia }} (Falta)</span>
+                        <!-- Mostrando los datos dinámicos de cada sesión para este producto -->
+                        {% for sesion_info in item.sesiones %}
+                        <td class="px-6 py-4 text-center font-bold text-boccherini-blue">
+                            {% if sesion_info.cantidad is not None %}
+                                <span class="text-base">{{ sesion_info.cantidad }}</span>
+                                
+                                <!-- Diferencia individual vs Stock Sistema -->
+                                {% if sesion_info.diferencia != 0 %}
+                                <span class="block text-xs font-normal mt-1 {% if sesion_info.diferencia > 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
+                                    {% if sesion_info.diferencia > 0 %}+{% endif %}{{ sesion_info.diferencia }}
+                                </span>
+                                {% else %}
+                                <span class="block text-xs font-normal mt-1 text-slate-300">OK</span>
+                                {% endif %}
+                                
                             {% else %}
-                                <span class="text-slate-400">0 (OK)</span>
+                                <span class="text-slate-300">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        
+                        <!-- Estado de Consenso -->
+                        <td class="px-6 py-4 text-center font-bold border-l border-slate-100">
+                            {% if item.estado == 'CONSENSO' %}
+                                <span class="inline-block w-full text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full text-xs border border-emerald-200">CONSENSO</span>
+                            {% elif item.estado == 'DIFERENCIA' %}
+                                <span class="inline-block w-full text-rose-700 bg-rose-100 px-3 py-1 rounded-full text-xs border border-rose-200">DIFERENCIA</span>
+                            {% else %}
+                                <span class="inline-block w-full text-slate-500 bg-slate-100 px-3 py-1 rounded-full text-xs border border-slate-200">SIN CONTEO</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
-                            No hay datos para conciliar. Verifica que haya stock o conteos registrados.
+                        <td colspan="100%" class="px-6 py-12 text-center text-slate-400 italic">
+                            No hay datos para conciliar. Verifica que haya stock o conteos registrados en esta base.
                         </td>
                     </tr>
                     {% endfor %}
