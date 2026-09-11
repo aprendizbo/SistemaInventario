@@ -34,6 +34,13 @@ urlpatterns = [
         name='editar_producto'
     ),
     path('importar/', views.importar_productos, name='importar_productos'),
+    
+    path('entradas/', views.registrar_entrada, name='registrar_entrada'),
+    path('salidas/', views.registrar_salida, name='registrar_salida'),
+    path('kardex/', views.kardex, name='kardex'),
+    path('transferencias/', views.lista_transferencias, name='lista_transferencias'),
+    path('transferencias/registrar/', views.registrar_transferencia, name='registrar_transferencia'),
+    
     path('exportar-excel/', views.exportar_excel, name='exportar_excel'),
     path('auditoria/', views.historial_auditoria, name='historial_auditoria'),
     
@@ -77,6 +84,31 @@ urlpatterns = [
     # ==========================================
     path('usuarios/', views.lista_usuarios, name='lista_usuarios'),
     path('usuarios/crear/', views.crear_usuario, name='crear_usuario'),
+
+    # ==========================================
+    # GESTIÓN DE UBICACIONES
+    # ==========================================
+    path(
+        'ubicaciones/',
+        views.lista_ubicaciones,
+        name='lista_ubicaciones'
+    ),
+    path(
+        'ubicaciones/crear/',
+        views.crear_ubicacion,
+        name='crear_ubicacion'
+    ),
+    path(
+        'ubicaciones/<int:ubicacion_id>/editar/',
+        views.editar_ubicacion,
+        name='editar_ubicacion'
+    ),
+    path(
+        'ubicaciones/<int:ubicacion_id>/toggle/',
+        views.toggle_ubicacion,
+        name='toggle_ubicacion'
+    ),
+
     path('usuarios/<int:user_id>/password/', views.cambiar_password_usuario, name='cambiar_password_usuario'),
     path('usuarios/<int:user_id>/toggle/', views.toggle_usuario, name='toggle_usuario'),
 

@@ -1,0 +1,276 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Registrar Salida | Boccherini{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto">
+
+    <!-- ENCABEZADO -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">
+                    Registrar salida
+                </h2>
+
+                <p class="text-sm text-slate-500 mt-1">
+                    Registra la salida de productos y actualiza automáticamente el stock.
+                </p>
+            </div>
+
+            <a href="{% url 'inventario:lista_productos' %}"
+               class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200
+                      text-slate-700 font-bold px-4 py-2.5 rounded-xl
+                      border border-slate-200 shadow-sm transition-colors text-sm">
+                ← Volver
+            </a>
+        </div>
+    </div>
+
+
+    <!-- MENSAJES -->
+    {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for message in messages %}
+                <div class="px-4 py-3 rounded-xl text-sm font-semibold
+                    {% if message.tags == 'error' %}
+                        bg-red-50 text-red-700 border border-red-200
+                    {% else %}
+                        bg-emerald-50 text-emerald-700 border border-emerald-200
+                    {% endif %}
+                ">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+
+    <!-- FORMULARIO -->
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+
+        <div class="px-6 py-5 bg-slate-50 border-b border-slate-200">
+            <h3 class="text-base font-extrabold text-slate-800">
+                Información de la salida
+            </h3>
+
+            <p class="text-xs text-slate-500 mt-1">
+                Los movimientos registrados quedarán asociados al usuario y fecha.
+            </p>
+        </div>
+
+
+        <form method="POST" class="p-6">
+
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- PRODUCTO -->
+                <div class="md:col-span-2">
+                    <label for="producto" class="block text-sm font-bold text-slate-700 mb-2">
+                        Producto
+                    </label>
+
+                    <select name="producto" id="producto" required
+                            class="w-full px-4 py-3 bg-white border border-slate-300
+                                   rounded-xl focus:outline-none focus:ring-2
+                                   focus:ring-red-500 focus:border-red-500
+                                   text-sm text-slate-700">
+                        <option value="">Seleccione un producto...</option>
+
+                        {% for producto in productos %}
+                            <option value="{{ producto.id }}" data-stock="{{ producto.stock_teorico }}">
+                                {{ producto.codigo_barras }} |
+                                {{ producto.descripcion }} |
+                                Stock Global: {{ producto.stock_teorico }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <p id="stock-disponible" class="text-xs text-slate-500 mt-2">
+                        Seleccione un producto y una ubicación para consultar el stock disponible.
+                    </p>
+                </div>
+
+
+                <!-- CANTIDAD -->
+                <div>
+                    <label for="cantidad" class="block text-sm font-bold text-slate-700 mb-2">
+                        Cantidad
+                    </label>
+
+                    <input type="number" name="cantidad" id="cantidad" min="1" required placeholder="Ej: 10"
+                           class="w-full px-4 py-3 bg-white border border-slate-300
+                                  rounded-xl focus:outline-none focus:ring-2
+                                  focus:ring-red-500 focus:border-red-500
+                                  text-sm text-slate-700">
+                </div>
+
+
+                <!-- UBICACIÓN -->
+                <div>
+                    <label for="ubicacion" class="block text-sm font-bold text-slate-700 mb-2">
+                        Ubicación
+                    </label>
+
+                    <select name="ubicacion" id="ubicacion" required
+                            class="w-full px-4 py-3 bg-white border border-slate-300
+                                   rounded-xl focus:outline-none focus:ring-2
+                                   focus:ring-red-500 focus:border-red-500
+                                   text-sm text-slate-700">
+                        <option value="">Seleccione una ubicación...</option>
+
+                        {% for ubicacion in ubicaciones %}
+                            <option value="{{ ubicacion.id }}" data-ubicacion="{{ ubicacion.id }}">
+                                {{ ubicacion.rack }} /
+                                {{ ubicacion.espacio }} /
+                                {{ ubicacion.nivel }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+
+                <!-- MOTIVO -->
+                <div>
+                    <label for="motivo" class="block text-sm font-bold text-slate-700 mb-2">
+                        Motivo
+                    </label>
+
+                    <select name="motivo" id="motivo"
+                            class="w-full px-4 py-3 bg-white border border-slate-300
+                                   rounded-xl focus:outline-none focus:ring-2
+                                   focus:ring-red-500 focus:border-red-500
+                                   text-sm text-slate-700">
+                        <option value="">Seleccione un motivo...</option>
+                        <option value="Venta">Venta</option>
+                        <option value="Consumo interno">Consumo interno</option>
+                        <option value="Devolución">Devolución</option>
+                        <option value="Traslado">Traslado</option>
+                        <option value="Ajuste">Ajuste</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+
+
+                <!-- OBSERVACIÓN -->
+                <div class="md:col-span-2">
+                    <label for="observacion" class="block text-sm font-bold text-slate-700 mb-2">
+                        Observación
+                    </label>
+
+                    <textarea name="observacion" id="observacion" rows="3" placeholder="Observaciones adicionales..."
+                              class="w-full px-4 py-3 bg-white border border-slate-300
+                                     rounded-xl focus:outline-none focus:ring-2
+                                     focus:ring-red-500 focus:border-red-500
+                                     text-sm text-slate-700 resize-none"></textarea>
+                </div>
+
+            </div>
+
+
+            <!-- AVISO -->
+            <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div class="flex gap-3">
+                    <span class="text-red-600 font-bold">!</span>
+
+                    <div>
+                        <p class="text-sm font-bold text-red-800">
+                            Importante
+                        </p>
+
+                        <p class="text-xs text-red-700 mt-1">
+                            La cantidad indicada se descontará inmediatamente
+                            del stock teórico del producto.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- BOTONES -->
+            <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
+
+                <a href="{% url 'inventario:lista_productos' %}"
+                   class="inline-flex justify-center items-center
+                          bg-slate-100 hover:bg-slate-200
+                          text-slate-700 font-bold px-5 py-3 rounded-xl
+                          border border-slate-200 transition-colors text-sm">
+                    Cancelar
+                </a>
+
+                <button type="submit"
+                        class="inline-flex justify-center items-center gap-2
+                               bg-red-600 hover:bg-red-700
+                               text-white font-bold px-6 py-3 rounded-xl
+                               shadow-md hover:shadow-lg
+                               transition-all duration-200 text-sm">
+                    − Registrar salida
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- DATOS OCULTOS PARA EL JAVASCRIPT -->
+<div class="hidden" id="datos-stock">
+    {% for stock in stock_ubicaciones %}
+        <span data-stock-producto="{{ stock.producto.id }}"
+              data-stock-ubicacion="{{ stock.ubicacion.id }}"
+              data-cantidad="{{ stock.cantidad }}">
+        </span>
+    {% endfor %}
+</div>
+
+
+<!-- VALIDACIÓN VISUAL DE STOCK POR UBICACIÓN -->
+<script>
+    const productoSelect = document.getElementById('producto');
+    const ubicacionSelect = document.getElementById('ubicacion');
+    const cantidadInput = document.getElementById('cantidad');
+    const stockDisponible = document.getElementById('stock-disponible');
+
+    function actualizarStock() {
+        const productoId = productoSelect.value;
+        const ubicacionId = ubicacionSelect.value;
+
+        cantidadInput.removeAttribute('max');
+
+        if (!productoId || !ubicacionId) {
+            stockDisponible.textContent =
+                'Seleccione un producto y una ubicación para consultar el stock.';
+
+            stockDisponible.className =
+                'text-xs text-slate-500 mt-2';
+
+            return;
+        }
+
+        const stockElement = document.querySelector(
+            `[data-stock-producto="${productoId}"][data-stock-ubicacion="${ubicacionId}"]`
+        );
+
+        const stock = stockElement
+            ? parseInt(stockElement.dataset.cantidad || '0', 10)
+            : 0;
+
+        stockDisponible.textContent =
+            `Stock disponible en esta ubicación: ${stock} unidades`;
+
+        stockDisponible.className =
+            'text-xs font-bold text-blue-700 mt-2';
+
+        cantidadInput.max = stock;
+    }
+
+    productoSelect.addEventListener('change', actualizarStock);
+    ubicacionSelect.addEventListener('change', actualizarStock);
+</script>
+
+{% endblock %}

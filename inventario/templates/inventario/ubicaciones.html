@@ -1,0 +1,316 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Maestro de Ubicaciones | Boccherini{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- ENCABEZADO -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+        <div>
+            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">
+                Maestro de Ubicaciones
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Administración de las ubicaciones físicas utilizadas por el inventario.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+            <button type="button" onclick="abrirModalAdmin()"
+                    class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700
+                           text-white font-bold px-4 py-2.5 rounded-xl
+                           shadow-md transition-colors text-sm border border-slate-700">
+                <span>⚙️</span>
+                <span>Administración</span>
+            </button>
+            
+            {% if not form %}
+                <a href="{% url 'inventario:crear_ubicacion' %}"
+                   class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700
+                          text-white font-bold px-4 py-2.5 rounded-xl
+                          shadow-md transition-colors text-sm">
+                    <span class="text-lg leading-none">+</span>
+                    <span>Nueva ubicación</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MENSAJES -->
+    {% if messages %}
+        <div class="space-y-3 mb-6">
+            {% for message in messages %}
+                <div class="px-5 py-4 rounded-xl border text-sm font-medium
+                            {% if message.tags == 'success' %}
+                                bg-emerald-50 border-emerald-200 text-emerald-700
+                            {% elif message.tags == 'warning' %}
+                                bg-amber-50 border-amber-200 text-amber-700
+                            {% else %}
+                                bg-red-50 border-red-200 text-red-700
+                            {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- FORMULARIO CREAR / EDITAR -->
+    {% if form %}
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden mb-6">
+            <div class="bg-boccherini-blue px-6 py-5">
+                <h3 class="text-white font-bold text-base tracking-wide">
+                    {% if modo == 'editar' %}
+                        Editar ubicación
+                    {% else %}
+                        Registrar nueva ubicación
+                    {% endif %}
+                </h3>
+                <p class="text-slate-300 text-xs mt-1">
+                    {% if modo == 'editar' %}
+                        Actualice la información física de la ubicación.
+                    {% else %}
+                        Registre una ubicación física que podrá ser utilizada por el inventario.
+                    {% endif %}
+                </p>
+            </div>
+            
+            <form method="post" class="p-6">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="mb-5 bg-red-50 border border-red-200 rounded-xl p-4">
+                        {% for error in form.non_field_errors %}
+                            <p class="text-sm font-medium text-red-700">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- CÓDIGO -->
+                    <div class="md:col-span-2">
+                        <label for="{{ form.codigo_barras.id_for_label }}"
+                               class="block text-sm font-bold text-slate-700 mb-2">
+                            Código de barras de la ubicación
+                        </label>
+                        {{ form.codigo_barras }}
+                        {% if form.codigo_barras.errors %}
+                            <div class="mt-2">
+                                {% for error in form.codigo_barras.errors %}
+                                    <p class="text-xs text-red-600 font-medium">
+                                        {{ error }}
+                                    </p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <p class="text-xs text-slate-400 mt-2">
+                            Este código debe identificar de manera única la ubicación física.
+                        </p>
+                    </div>
+
+                    <!-- RACK -->
+                    <div>
+                        <label for="{{ form.rack.id_for_label }}"
+                               class="block text-sm font-bold text-slate-700 mb-2">
+                            Rack
+                        </label>
+                        {{ form.rack }}
+                        {% if form.rack.errors %}
+                            {% for error in form.rack.errors %}
+                                <p class="text-xs text-red-600 font-medium mt-2">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- ESPACIO -->
+                    <div>
+                        <label for="{{ form.espacio.id_for_label }}"
+                               class="block text-sm font-bold text-slate-700 mb-2">
+                            Espacio
+                        </label>
+                        {{ form.espacio }}
+                        {% if form.espacio.errors %}
+                            {% for error in form.espacio.errors %}
+                                <p class="text-xs text-red-600 font-medium mt-2">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <!-- NIVEL -->
+                    <div>
+                        <label for="{{ form.nivel.id_for_label }}"
+                               class="block text-sm font-bold text-slate-700 mb-2">
+                            Nivel
+                        </label>
+                        {{ form.nivel }}
+                        {% if form.nivel.errors %}
+                            {% for error in form.nivel.errors %}
+                                <p class="text-xs text-red-600 font-medium mt-2">
+                                    {{ error }}
+                                </p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- BOTONES -->
+                <div class="flex flex-wrap items-center justify-end gap-3 mt-7 pt-5 border-t border-slate-200">
+                    <a href="{% url 'inventario:lista_ubicaciones' %}"
+                       class="inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200
+                              text-slate-700 font-bold px-5 py-2.5 rounded-xl
+                              border border-slate-200 text-sm transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700
+                                   text-white font-bold px-5 py-2.5 rounded-xl
+                                   shadow-md text-sm transition-colors">
+                        {% if modo == 'editar' %}
+                            Guardar cambios
+                        {% else %}
+                            Registrar ubicación
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- LISTADO -->
+    {% if not form %}
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+            <!-- ENCABEZADO -->
+            <div class="bg-boccherini-blue px-6 py-4 flex flex-col sm:flex-row
+                        sm:items-center sm:justify-between gap-3"
+                 style="background-color: #0b2240;">
+                <div>
+                    <h3 class="text-white font-bold text-base tracking-wide">
+                        Ubicaciones registradas
+                    </h3>
+                    <p class="text-slate-300 text-xs mt-1">
+                        Catálogo maestro de posiciones físicas del inventario.
+                    </p>
+                </div>
+                <span class="inline-flex items-center justify-center bg-blue-500/20 text-blue-200
+                             border border-blue-400/30 text-[10px] font-extrabold px-3 py-1.5
+                             rounded-full uppercase tracking-widest">
+                    {{ ubicaciones|length }} ubicaciones
+                </span>
+            </div>
+
+            <!-- TABLA -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            <th class="px-6 py-4">Código</th>
+                            <th class="px-6 py-4">Rack</th>
+                            <th class="px-6 py-4">Espacio</th>
+                            <th class="px-6 py-4">Nivel</th>
+                            <th class="px-6 py-3 text-left">Productos</th> <!-- NUEVA COLUMNA -->
+                            <th class="px-6 py-4 text-center">Estado</th>
+                            <th class="px-6 py-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm">
+                        {% for ubicacion in ubicaciones %}
+                            <tr class="hover:bg-slate-50/80 animacion-suave">
+                                <td class="px-6 py-4">
+                                    <span class="font-mono font-bold text-slate-700 tracking-wide">
+                                        {{ ubicacion.codigo_barras }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-slate-600 font-medium">
+                                    {{ ubicacion.rack }}
+                                </td>
+                                <td class="px-6 py-4 text-slate-600 font-medium">
+                                    {{ ubicacion.espacio }}
+                                </td>
+                                <td class="px-6 py-4 text-slate-600 font-medium">
+                                    {{ ubicacion.nivel }}
+                                </td>
+                                
+                                <!-- NUEVA CELDA: PRODUCTOS -->
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center justify-center min-w-10 px-3 py-1 
+                                                 rounded-full bg-slate-100 text-slate-700 font-bold text-sm">
+                                        {{ ubicacion.cantidad_productos }}
+                                    </span>
+                                </td>
+                                
+                                <td class="px-6 py-4 text-center">
+                                    {% if ubicacion.activa %}
+                                        <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700
+                                                     border border-emerald-200 px-3 py-1 rounded-full text-xs font-extrabold">
+                                            <span>●</span> Activa
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-500
+                                                     border border-slate-200 px-3 py-1 rounded-full text-xs font-extrabold">
+                                            <span>●</span> Inactiva
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <!-- EDITAR -->
+                                        <a href="{% url 'inventario:editar_ubicacion' ubicacion.id %}"
+                                           class="inline-flex items-center bg-amber-500 hover:bg-amber-600
+                                                  text-white font-bold px-3 py-2 rounded-lg shadow-sm transition-colors text-xs">
+                                            Editar
+                                        </a>
+                                        
+                                        <!-- ACTIVAR / DESACTIVAR -->
+                                        <form method="post" action="{% url 'inventario:toggle_ubicacion' ubicacion.id %}" class="inline">
+                                            {% csrf_token %}
+                                            {% if ubicacion.activa %}
+                                                <button type="submit"
+                                                        class="inline-flex items-center bg-red-50 hover:bg-red-100
+                                                               text-red-600 border border-red-200 font-bold px-3 py-2
+                                                               rounded-lg transition-colors text-xs"
+                                                        onclick="return confirm('¿Está seguro de desactivar esta ubicación?');">
+                                                    Desactivar
+                                                </button>
+                                            {% else %}
+                                                <button type="submit"
+                                                        class="inline-flex items-center bg-emerald-50 hover:bg-emerald-100
+                                                               text-emerald-700 border border-emerald-200 font-bold px-3 py-2
+                                                               rounded-lg transition-colors text-xs">
+                                                    Activar
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-16 text-center"> <!-- ACTUALIZADO A COLSPAN 7 -->
+                                    <div class="text-slate-400">
+                                        <div class="text-4xl mb-3">📍</div>
+                                        <p class="font-bold text-slate-600">
+                                            No hay ubicaciones registradas.
+                                        </p>
+                                        <p class="text-sm mt-1">
+                                            Registre la primera ubicación para comenzar a organizar el inventario.
+                                        </p>
+                                        <a href="{% url 'inventario:crear_ubicacion' %}"
+                                           class="inline-flex mt-5 bg-emerald-600 hover:bg-emerald-700
+                                                  text-white font-bold px-5 py-2.5 rounded-xl shadow-md text-sm">
+                                            + Registrar primera ubicación
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

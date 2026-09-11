@@ -1,0 +1,134 @@
+{% extends "inventario/base.html" %}
+
+{% block title %}Registrar entrada{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-800">
+            Registrar entrada
+        </h1>
+        <p class="text-gray-500 mt-1">
+            Registra mercancía o productos que ingresan al inventario.
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mb-4 p-4 rounded-lg bg-green-100 text-green-800">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- PRODUCTO -->
+                <div class="md:col-span-2">
+                    <label for="producto" class="block text-sm font-medium text-gray-700 mb-2">
+                        Producto
+                    </label>
+
+                    <select name="producto" id="producto" required
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">
+                            Seleccione un producto
+                        </option>
+
+                        {% for producto in productos %}
+                            <option value="{{ producto.id }}">
+                                {{ producto.codigo_barras }} -
+                                {{ producto.descripcion }}
+                                | Stock actual: {{ producto.stock_teorico }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- CANTIDAD -->
+                <div>
+                    <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-2">
+                        Cantidad
+                    </label>
+
+                    <input type="number" name="cantidad" id="cantidad" min="1" required placeholder="Ej: 100"
+                           class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+
+                <!-- UBICACIÓN (ACTUALIZADO) -->
+                <div>
+                    <label for="ubicacion" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ubicación
+                    </label>
+
+                    <select name="ubicacion" id="ubicacion" required
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">
+                            Seleccione una ubicación
+                        </option>
+
+                        {% for ubicacion in ubicaciones %}
+                            <option value="{{ ubicacion.id }}">
+                                {{ ubicacion.rack }} /
+                                {{ ubicacion.espacio }} /
+                                {{ ubicacion.nivel }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- MOTIVO -->
+                <div>
+                    <label for="motivo" class="block text-sm font-medium text-gray-700 mb-2">
+                        Motivo
+                    </label>
+
+                    <select name="motivo" id="motivo"
+                            class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Seleccione</option>
+                        <option value="Compra">Compra</option>
+                        <option value="Devolución">Devolución</option>
+                        <option value="Traslado">Traslado</option>
+                        <option value="Ajuste">Ajuste</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+
+                <!-- OBSERVACIÓN -->
+                <div>
+                    <label for="observacion" class="block text-sm font-medium text-gray-700 mb-2">
+                        Observación
+                    </label>
+
+                    <textarea name="observacion" id="observacion" rows="3" placeholder="Observación opcional..."
+                              class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                </div>
+
+            </div>
+
+            <div class="mt-8 flex justify-end gap-3">
+                <a href="{% url 'inventario:lista_productos' %}"
+                   class="px-5 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                    Cancelar
+                </a>
+
+                <button type="submit"
+                        class="px-5 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700">
+                    Registrar entrada
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

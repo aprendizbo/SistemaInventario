@@ -46,3 +46,15 @@ from .bases import (
     crear_base_inventario,
     cerrar_base_inventario,
 )
+
+from .entradas import registrar_entrada
+from .salidas import registrar_salida
+from .kardex import kardex
+from .transferencias import registrar_transferencia, lista_transferencias
+
+from .ubicaciones import (
+    lista_ubicaciones,
+    crear_ubicacion,
+    editar_ubicacion,
+    toggle_ubicacion,
+)

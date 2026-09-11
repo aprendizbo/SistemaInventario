@@ -9,7 +9,10 @@ from django.db.models import Sum
 from ..models import (
     BaseInventario,
     BaseProducto,
+    BaseProductoUbicacion,
+    HistorialProductoUbicacion,
     Producto,
+    StockUbicacion,
     ConteoDetalle,
     HistorialProducto,
     SesionInventario,
@@ -150,14 +153,47 @@ def crear_base_inventario(request):
                     )
                 )
 
-            # ====================================================
-            # 5. GUARDAR SNAPSHOT
-            # ====================================================
+            # ============================================================
+            # 4.1. FOTOGRAFÍA DE STOCK POR UBICACIÓN
+            # ============================================================
+            stocks_por_ubicacion = (
+                StockUbicacion.objects
+                .select_related(
+                    'producto',
+                    'ubicacion'
+                )
+                .filter(
+                    cantidad__gt=0
+                )
+            )
 
+            bases_productos_ubicaciones = []
+
+            for stock_ubicacion in stocks_por_ubicacion:
+
+                bases_productos_ubicaciones.append(
+                    BaseProductoUbicacion(
+                        base=base,
+                        producto=stock_ubicacion.producto,
+                        ubicacion=stock_ubicacion.ubicacion,
+                        cantidad=stock_ubicacion.cantidad,
+                    )
+                )
+
+            # ============================================================
+            # 5. GUARDAR SNAPSHOT
+            # ============================================================
             if bases_productos:
 
                 BaseProducto.objects.bulk_create(
                     bases_productos,
+                    batch_size=500
+                )
+
+            if bases_productos_ubicaciones:
+
+                BaseProductoUbicacion.objects.bulk_create(
+                    bases_productos_ubicaciones,
                     batch_size=500
                 )
 
@@ -311,6 +347,29 @@ def cerrar_base_inventario(request, base_id):
                     cantidad_contada=cantidad_contada,
                     diferencia=diferencia
                 )
+
+                # ========================================================
+                # FOTOGRAFÍA HISTÓRICA POR UBICACIÓN
+                # ========================================================
+                stocks_historicos = (
+                    StockUbicacion.objects
+                    .select_related(
+                        'producto',
+                        'ubicacion'
+                    )
+                    .filter(
+                        producto=producto,
+                        cantidad__gt=0
+                    )
+                )
+
+                for stock_historico in stocks_historicos:
+                    HistorialProductoUbicacion.objects.create(
+                        base=base,
+                        producto=producto,
+                        ubicacion=stock_historico.ubicacion,
+                        cantidad=stock_historico.cantidad,
+                    )
 
             # =====================================================
             # 4. CERRAR LA BASE

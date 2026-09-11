@@ -1,0 +1,97 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Transferencias | Boccherini{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900">
+                Transferencias de inventario
+            </h1>
+            <p class="text-slate-500 mt-1">
+                Historial de traslados de productos entre ubicaciones.
+            </p>
+        </div>
+        <a href="{% url 'inventario:registrar_transferencia' %}"
+           class="inline-flex items-center justify-center px-4 py-2.5
+                  rounded-xl bg-boccherini-blue text-white
+                  text-sm font-bold hover:opacity-90 transition-opacity">
+            Nueva transferencia
+        </a>
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="px-6 py-4 border-b border-slate-200">
+        <h2 class="text-lg font-bold text-slate-800">
+            Historial de transferencias
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">
+            Consulta los movimientos registrados.
+        </p>
+    </div>
+
+    {% if transferencias %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 border-b border-slate-200">
+                    <tr>
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">Fecha</th>
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">Producto</th>
+                        <th class="text-center px-6 py-3 font-bold text-slate-600">Cantidad</th>
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">Origen</th>
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">Destino</th>
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">Usuario</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for transferencia in transferencias %}
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4 text-slate-600 whitespace-nowrap">
+                                {{ transferencia.fecha|date:"d/m/Y H:i" }}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-slate-800">
+                                    {{ transferencia.producto.descripcion }}
+                                </div>
+                                <div class="text-xs text-slate-500">
+                                    {{ transferencia.producto.codigo_barras }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-900">
+                                {{ transferencia.cantidad }}
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                {{ transferencia.ubicacion_origen }}
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                {{ transferencia.ubicacion_destino }}
+                            </td>
+                            <td class="px-6 py-4 text-slate-600">
+                                {{ transferencia.usuario.username }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="px-6 py-12 text-center">
+            <div class="text-4xl mb-3">⇄</div>
+            <h3 class="text-lg font-bold text-slate-800">
+                No hay transferencias
+            </h3>
+            <p class="text-sm text-slate-500 mt-1">
+                Las transferencias aparecerán aquí cuando se registren.
+            </p>
+            <a href="{% url 'inventario:registrar_transferencia' %}"
+               class="inline-flex mt-5 px-5 py-2.5 rounded-xl
+                      bg-boccherini-blue text-white font-bold text-sm
+                      hover:opacity-90 transition-opacity">
+                Registrar primera transferencia
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

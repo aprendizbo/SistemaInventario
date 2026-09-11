@@ -22,26 +22,30 @@ from .bases import get_client_ip, get_base_activa
 
 @login_required
 def lista_productos(request):
-    query = request.GET.get('q', '')
+    query = request.GET.get('q', '').strip()
+
+    # Obtener la base de inventario actualmente activa
+    base_activa = get_base_activa()
+
+    productos_list = (
+        Producto.objects
+        .prefetch_related(
+            'stocks_por_ubicacion__ubicacion'
+        )
+        .all()
+        .order_by('-id')
+    )
 
     if query:
-        productos_list = Producto.objects.select_related(
-            'ubicacion'
-        ).filter(
+        productos_list = productos_list.filter(
             Q(codigo_barras__icontains=query) |
             Q(descripcion__icontains=query)
-        ).order_by('-id')
-    else:
-        # Se removió activo=True, ahora trae todos
-        productos_list = Producto.objects.select_related(
-            'ubicacion'
-        ).all().order_by('-id')
+        )
 
     paginator = Paginator(productos_list, 50)
+
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-
-    base_activa = get_base_activa()
 
     return render(
         request,
@@ -68,7 +72,6 @@ def importar_productos(request):
         # ============================================================
         # 1. BASE ACTIVA OBLIGATORIA
         # ============================================================
-
         base_activa = get_base_activa()
 
         if not base_activa:
@@ -82,7 +85,6 @@ def importar_productos(request):
         # ============================================================
         # 2. VALIDAR EXTENSIÓN
         # ============================================================
-
         nombre_archivo = excel_file.name.lower()
 
         extensiones_permitidas = (
@@ -102,7 +104,6 @@ def importar_productos(request):
         # ============================================================
         # 3. LEER ARCHIVO
         # ============================================================
-
         if nombre_archivo.endswith('.csv'):
             try:
                 df = pd.read_csv(
@@ -135,7 +136,6 @@ def importar_productos(request):
         # ============================================================
         # 4. VALIDAR QUE TENGA DATOS
         # ============================================================
-
         if df.empty:
             messages.error(
                 request,
@@ -146,7 +146,6 @@ def importar_productos(request):
         # ============================================================
         # 5. NORMALIZAR NOMBRES DE COLUMNAS
         # ============================================================
-
         def normalizar_texto(valor):
             if pd.isna(valor):
                 return ''
@@ -181,7 +180,6 @@ def importar_productos(request):
         # ============================================================
         # 6. DETECTAR COLUMNAS AUTOMÁTICAMENTE
         # ============================================================
-
         equivalencias = {
             'codigo_barras': [
                 'codigo barras',
@@ -240,9 +238,7 @@ def importar_productos(request):
         columnas_detectadas = {}
 
         for campo, nombres_posibles in equivalencias.items():
-
             encontrada = None
-
             for columna in df.columns:
                 if columna in nombres_posibles:
                     encontrada = columna
@@ -254,7 +250,6 @@ def importar_productos(request):
         # ============================================================
         # 7. VALIDAR COLUMNAS OBLIGATORIAS
         # ============================================================
-
         obligatorias = {
             'codigo_barras',
             'descripcion',
@@ -275,7 +270,6 @@ def importar_productos(request):
         # ============================================================
         # 8. COLUMNAS OPCIONALES
         # ============================================================
-
         columna_codigo = columnas_detectadas['codigo_barras']
         columna_descripcion = columnas_detectadas['descripcion']
 
@@ -285,7 +279,6 @@ def importar_productos(request):
         # ============================================================
         # 9. PREPARAR DATOS
         # ============================================================
-
         productos_crear = []
         productos_actualizar = []
 
@@ -304,13 +297,11 @@ def importar_productos(request):
         # ============================================================
         # 10. PROCESAR CADA FILA
         # ============================================================
-
         for index, row in df.iterrows():
 
             # --------------------------------------------------------
             # CÓDIGO
             # --------------------------------------------------------
-
             codigo_valor = row.get(columna_codigo, '')
 
             if pd.isna(codigo_valor):
@@ -319,11 +310,9 @@ def importar_productos(request):
 
             codigo = str(codigo_valor).strip()
 
-            # Eliminar .0 de Excel
             if codigo.endswith('.0'):
                 codigo = codigo[:-2]
 
-            # Eliminar espacios internos accidentales
             codigo = codigo.replace(' ', '')
 
             if not codigo:
@@ -333,7 +322,6 @@ def importar_productos(request):
             # --------------------------------------------------------
             # DUPLICADOS DENTRO DEL MISMO ARCHIVO
             # --------------------------------------------------------
-
             if codigo in codigos_archivo:
                 filas_duplicadas += 1
                 continue
@@ -343,7 +331,6 @@ def importar_productos(request):
             # --------------------------------------------------------
             # DESCRIPCIÓN
             # --------------------------------------------------------
-
             descripcion_valor = row.get(
                 columna_descripcion,
                 ''
@@ -362,7 +349,6 @@ def importar_productos(request):
             # --------------------------------------------------------
             # STOCK
             # --------------------------------------------------------
-
             stock = 0
 
             if columna_stock:
@@ -385,34 +371,26 @@ def importar_productos(request):
                         if stock < 0:
                             stock = 0
 
-                except (
-                    ValueError,
-                    TypeError,
-                    OverflowError
-                ):
+                except (ValueError, TypeError, OverflowError):
                     stock = 0
 
             # --------------------------------------------------------
             # UBICACIÓN
             # --------------------------------------------------------
-
             ubicacion = None
 
             if columna_ubicacion:
-
                 ubicacion_valor = row.get(
                     columna_ubicacion,
                     ''
                 )
 
                 if not pd.isna(ubicacion_valor):
-
                     ubicacion_texto = str(
                         ubicacion_valor
                     ).strip()
 
                     if ubicacion_texto:
-
                         ubicacion, _ = (
                             Ubicacion.objects.get_or_create(
                                 codigo_barras=ubicacion_texto,
@@ -427,9 +405,7 @@ def importar_productos(request):
             # ========================================================
             # 11. ACTUALIZAR PRODUCTO EXISTENTE
             # ========================================================
-
             if codigo in codigos_db:
-
                 try:
                     producto = Producto.objects.get(
                         codigo_barras=codigo
@@ -456,9 +432,7 @@ def importar_productos(request):
             # ========================================================
             # 12. CREAR PRODUCTO NUEVO
             # ========================================================
-
             else:
-
                 productos_crear.append(
                     Producto(
                         codigo_barras=codigo,
@@ -473,7 +447,6 @@ def importar_productos(request):
         # ============================================================
         # 13. GUARDAR NUEVOS
         # ============================================================
-
         if productos_crear:
             Producto.objects.bulk_create(
                 productos_crear,
@@ -483,7 +456,6 @@ def importar_productos(request):
         # ============================================================
         # 14. ACTUALIZAR EXISTENTES
         # ============================================================
-
         if productos_actualizar:
             Producto.objects.bulk_update(
                 productos_actualizar,
@@ -499,7 +471,6 @@ def importar_productos(request):
         # 14.5. CREAR / ACTUALIZAR SNAPSHOT DE LA BASE ACTIVA
         # ============================================================
         for producto in Producto.objects.select_related('ubicacion').all():
-
             BaseProducto.objects.update_or_create(
                 base=base_activa,
                 producto=producto,
@@ -516,7 +487,6 @@ def importar_productos(request):
         # ============================================================
         # 15. AUDITORÍA
         # ============================================================
-
         LogAuditoria.objects.create(
             usuario=request.user,
             accion='IMPORTAR',
@@ -536,7 +506,6 @@ def importar_productos(request):
         # ============================================================
         # 16. MENSAJE FINAL
         # ============================================================
-
         messages.success(
             request,
             (
@@ -560,7 +529,6 @@ def importar_productos(request):
             )
 
     except Exception as e:
-
         messages.error(
             request,
             f'Error al procesar el archivo: {str(e)}'
@@ -619,6 +587,7 @@ def crear_producto(request):
             'form': form
         }
     )
+
 
 @login_required
 def editar_producto(request, producto_id):
