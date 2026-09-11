@@ -1,0 +1,328 @@
+{% extends 'inventario/base.html' %}
+
+{% block title %}Kardex | Boccherini{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+        <div>
+            <h1 class="text-3xl font-bold text-slate-900">
+                ▤ Kardex de Inventario
+            </h1>
+
+            <p class="text-slate-500 mt-1">
+                Historial detallado de entradas y salidas del inventario.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'inventario:lista_productos' %}"
+            class="inline-flex items-center justify-center px-4 py-2
+                   rounded-lg bg-slate-700 text-white text-sm font-semibold
+                   hover:bg-slate-800 transition-colors"
+        >
+            ← Maestro de Productos
+        </a>
+
+    </div>
+</div>
+
+
+<!-- FILTROS -->
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+
+    <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                Producto
+            </label>
+
+            <select
+                name="producto"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2
+                       bg-white focus:outline-none focus:ring-2
+                       focus:ring-boccherini-gold"
+            >
+                <option value="">Todos los productos</option>
+
+                {% for producto in productos %}
+                    <option
+                        value="{{ producto.id }}"
+                        {% if producto_id == producto.id|stringformat:"s" %}
+                            selected
+                        {% endif %}
+                    >
+                        {{ producto.codigo_barras }} - {{ producto.descripcion }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                Tipo de movimiento
+            </label>
+
+            <select
+                name="tipo"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2
+                       bg-white focus:outline-none focus:ring-2
+                       focus:ring-boccherini-gold"
+            >
+                <option value="">Todos</option>
+
+                <option
+                    value="ENTRADA"
+                    {% if tipo == 'ENTRADA' %}selected{% endif %}
+                >
+                    Entradas
+                </option>
+
+                <option
+                    value="SALIDA"
+                    {% if tipo == 'SALIDA' %}selected{% endif %}
+                >
+                    Salidas
+                </option>
+            </select>
+        </div>
+
+
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">
+                Buscar
+            </label>
+
+            <input
+                type="text"
+                name="buscar"
+                value="{{ busqueda }}"
+                placeholder="Código o descripción..."
+                class="w-full border border-slate-300 rounded-lg px-3 py-2
+                       focus:outline-none focus:ring-2
+                       focus:ring-boccherini-gold"
+            >
+        </div>
+
+
+        <div class="flex items-end gap-2">
+
+            <button
+                type="submit"
+                class="flex-1 px-4 py-2 rounded-lg
+                       bg-boccherini-blue text-white
+                       text-sm font-semibold
+                       hover:opacity-90 transition"
+            >
+                🔍 Filtrar
+            </button>
+
+            <a
+                href="{% url 'inventario:kardex' %}"
+                class="px-4 py-2 rounded-lg
+                       bg-slate-200 text-slate-700
+                       text-sm font-semibold
+                       hover:bg-slate-300 transition"
+            >
+                Limpiar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- TABLA KARDEX -->
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+    <div class="px-6 py-4 border-b border-slate-200">
+
+        <h2 class="text-lg font-bold text-slate-800">
+            Historial de movimientos
+        </h2>
+
+        <p class="text-sm text-slate-500 mt-1">
+            Cada registro muestra cómo cambió el stock.
+        </p>
+
+    </div>
+
+
+    {% if movimientos %}
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <thead class="bg-slate-50 border-b border-slate-200">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">
+                            Fecha
+                        </th>
+
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">
+                            Producto
+                        </th>
+
+                        <th class="text-center px-6 py-3 font-bold text-slate-600">
+                            Movimiento
+                        </th>
+
+                        <th class="text-right px-6 py-3 font-bold text-slate-600">
+                            Cantidad
+                        </th>
+
+                        <th class="text-right px-6 py-3 font-bold text-slate-600">
+                            Stock anterior
+                        </th>
+
+                        <th class="text-right px-6 py-3 font-bold text-slate-600">
+                            Stock posterior
+                        </th>
+
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">
+                            Motivo
+                        </th>
+
+                        <th class="text-left px-6 py-3 font-bold text-slate-600">
+                            Usuario
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody class="divide-y divide-slate-100">
+
+                    {% for movimiento in movimientos %}
+
+                        <tr class="hover:bg-slate-50 transition">
+
+                            <td class="px-6 py-4 text-slate-600 whitespace-nowrap">
+                                {{ movimiento.fecha|date:"d/m/Y H:i" }}
+                            </td>
+
+
+                            <td class="px-6 py-4">
+
+                                <div class="font-semibold text-slate-800">
+                                    {{ movimiento.producto.descripcion }}
+                                </div>
+
+                                <div class="text-xs text-slate-500">
+                                    {{ movimiento.producto.codigo_barras }}
+                                </div>
+
+                            </td>
+
+
+                            <td class="px-6 py-4 text-center">
+
+                                {% if movimiento.tipo == 'ENTRADA' %}
+
+                                    <span
+                                        class="inline-flex items-center px-3 py-1
+                                               rounded-full text-xs font-bold
+                                               bg-emerald-100 text-emerald-700"
+                                    >
+                                        🟢 ENTRADA
+                                    </span>
+
+                                {% else %}
+
+                                    <span
+                                        class="inline-flex items-center px-3 py-1
+                                               rounded-full text-xs font-bold
+                                               bg-rose-100 text-rose-700"
+                                    >
+                                        🔴 SALIDA
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td class="px-6 py-4 text-right font-bold">
+
+                                {% if movimiento.tipo == 'ENTRADA' %}
+                                    <span class="text-emerald-600">
+                                        +{{ movimiento.cantidad }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-rose-600">
+                                        -{{ movimiento.cantidad }}
+                                    </span>
+                                {% endif %}
+
+                            </td>
+
+
+                            <td class="px-6 py-4 text-right text-slate-600">
+                                {{ movimiento.stock_anterior }}
+                            </td>
+
+
+                            <td class="px-6 py-4 text-right font-bold text-slate-900">
+                                {{ movimiento.stock_posterior }}
+                            </td>
+
+
+                            <td class="px-6 py-4 text-slate-600">
+                                {% if movimiento.motivo %}
+                                    {{ movimiento.motivo }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+
+                            <td class="px-6 py-4 text-slate-600">
+                                {{ movimiento.usuario.username }}
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="px-6 py-12 text-center">
+
+            <div class="text-4xl mb-3">
+                ▤
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800">
+                No hay movimientos
+            </h3>
+
+            <p class="text-sm text-slate-500 mt-1">
+                Los movimientos aparecerán aquí cuando se registren
+                entradas o salidas.
+            </p>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}
