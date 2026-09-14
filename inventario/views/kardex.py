@@ -6,11 +6,17 @@ from ..models import MovimientoInventario, Producto
 
 @login_required
 def kardex(request):
-    movimientos = MovimientoInventario.objects.select_related(
-        'producto',
-        'ubicacion',
-        'usuario',
-    ).order_by('-fecha')
+    movimientos = (
+        MovimientoInventario.objects
+        .select_related(
+            'producto',
+            'ubicacion',
+            'ubicacion_origen',
+            'ubicacion_destino',
+            'usuario',
+        )
+        .order_by('-fecha')
+    )
 
     productos = Producto.objects.order_by('descripcion')
 
@@ -23,7 +29,7 @@ def kardex(request):
             producto_id=producto_id
         )
 
-    if tipo in ['ENTRADA', 'SALIDA']:
+    if tipo in ['ENTRADA', 'SALIDA', 'TRANSFERENCIA']:
         movimientos = movimientos.filter(
             tipo=tipo
         )

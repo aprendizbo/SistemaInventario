@@ -173,23 +173,19 @@
                         <span>Kardex</span>
                     </a>
 
-                    <!-- INVENTARIO OPERATIVO - PRÓXIMAMENTE -->
-                    <button
-                        type="button"
-                        disabled
-                        class="inline-flex items-center gap-2
-                               bg-slate-100 text-slate-400
-                               border border-slate-200
-                               font-bold px-5 py-3 rounded-xl
-                               text-sm cursor-not-allowed"
-                    >
+                    <!-- INVENTARIO OPERATIVO -->
+                    <a href="{% url 'inventario:inventario_operativo' %}"
+                       class="inline-flex items-center gap-2
+                              bg-slate-700 hover:bg-slate-800
+                              text-white
+                              border border-slate-700
+                              font-bold px-5 py-3 rounded-xl
+                              shadow-sm hover:shadow-md
+                              transition-all duration-200
+                              text-sm">
                         <span class="text-lg leading-none">▣</span>
                         <span>Inventario operativo</span>
-                        <span class="text-[9px] uppercase tracking-wider
-                                     bg-slate-200 px-2 py-0.5 rounded-full">
-                            Próximamente
-                        </span>
-                    </button>
+                    </a>
 
                 </div>
             </div>

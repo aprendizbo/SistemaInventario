@@ -14,6 +14,16 @@ urlpatterns = [
     # Ruta para la página principal que lista los productos (Maestro global)
     path('', views.lista_productos, name='lista_productos'),
     
+    # Ruta de Inventario Operativo agregada
+    path('operativo/', views.inventario_operativo, name='inventario_operativo'),
+    
+    # Ruta para distribuir stock de un producto
+    path(
+        'operativo/distribuir/<int:producto_id>/',
+        views.distribuir_stock,
+        name='distribuir_stock'
+    ),
+    
     # El tablero corporativo para elegir la sesión de trabajo antes de escanear
     path('sesiones/', views.panel_sesiones, name='panel_sesiones'),
     
