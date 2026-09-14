@@ -58,3 +58,5 @@ from .ubicaciones import (
     editar_ubicacion,
     toggle_ubicacion,
 )
+from .operativo import inventario_operativo
+from .distribucion import distribuir_stock

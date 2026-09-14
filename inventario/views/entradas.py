@@ -92,6 +92,8 @@ def registrar_entrada(request):
                 stock_anterior=stock_anterior,
                 stock_posterior=stock_posterior,
                 ubicacion=ubicacion,
+                ubicacion_origen=None,
+                ubicacion_destino=ubicacion,
                 motivo=motivo,
                 observacion=observacion,
                 usuario=request.user,

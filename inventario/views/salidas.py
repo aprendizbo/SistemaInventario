@@ -118,6 +118,8 @@ def registrar_salida(request):
                 stock_anterior=stock_anterior,
                 stock_posterior=stock_posterior,
                 ubicacion=ubicacion,
+                ubicacion_origen=ubicacion,
+                ubicacion_destino=None,
                 motivo=motivo,
                 observacion=observacion,
                 usuario=request.user,

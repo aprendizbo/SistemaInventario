@@ -9,6 +9,7 @@ class MovimientoInventario(models.Model):
     TIPOS = (
         ('ENTRADA', 'Entrada'),
         ('SALIDA', 'Salida'),
+        ('TRANSFERENCIA', 'Transferencia'),
     )
 
     producto = models.ForeignKey(
@@ -18,7 +19,7 @@ class MovimientoInventario(models.Model):
     )
 
     tipo = models.CharField(
-        max_length=10,
+        max_length=20,  # <-- Correctamente ajustado a 20
         choices=TIPOS
     )
 
@@ -38,6 +39,22 @@ class MovimientoInventario(models.Model):
         null=True,
         blank=True,
         related_name='movimientos_kardex'
+    )
+
+    ubicacion_origen = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movimientos_kardex_origen'
+    )
+
+    ubicacion_destino = models.ForeignKey(
+        Ubicacion,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='movimientos_kardex_destino'
     )
 
     motivo = models.CharField(
@@ -65,7 +82,12 @@ class MovimientoInventario(models.Model):
         ordering = ['-fecha']
 
     def __str__(self):
-        signo = '+' if self.tipo == 'ENTRADA' else '-'
+        if self.tipo == 'ENTRADA':
+            signo = '+'
+        elif self.tipo == 'SALIDA':
+            signo = '-'
+        else:
+            signo = '⇄ ' # Para las transferencias
 
         return (
             f'{self.tipo} - '

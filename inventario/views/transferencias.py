@@ -5,6 +5,8 @@ from django.shortcuts import redirect, render
 
 from inventario.forms import TransferenciaInventarioForm
 from inventario.models import (
+    MovimientoInventario,
+    Producto,
     TransferenciaInventario,
     StockUbicacion,
 )
@@ -20,19 +22,30 @@ def registrar_transferencia(request):
         if form.is_valid():
 
             try:
+
                 with transaction.atomic():
 
                     transferencia = form.save(commit=False)
                     transferencia.usuario = request.user
 
-                    producto = transferencia.producto
+                    producto_id = transferencia.producto_id
                     cantidad = transferencia.cantidad
                     origen = transferencia.ubicacion_origen
                     destino = transferencia.ubicacion_destino
 
-                    # =====================================================
+                    # ==================================================
+                    # BLOQUEAR PRODUCTO
+                    # ==================================================
+
+                    producto = (
+                        Producto.objects
+                        .select_for_update()
+                        .get(pk=producto_id)
+                    )
+
+                    # ==================================================
                     # VALIDACIÓN 1: CANTIDAD
-                    # =====================================================
+                    # ==================================================
 
                     if cantidad <= 0:
 
@@ -47,9 +60,9 @@ def registrar_transferencia(request):
                             {'form': form}
                         )
 
-                    # =====================================================
+                    # ==================================================
                     # VALIDACIÓN 2: ORIGEN Y DESTINO DIFERENTES
-                    # =====================================================
+                    # ==================================================
 
                     if origen == destino:
 
@@ -64,18 +77,29 @@ def registrar_transferencia(request):
                             {'form': form}
                         )
 
-                    # =====================================================
-                    # BUSCAR STOCK DEL PRODUCTO EN EL ORIGEN
-                    # =====================================================
+                    # ==================================================
+                    # STOCK ANTES DE LA TRANSFERENCIA
+                    # ==================================================
 
-                    stock_origen = StockUbicacion.objects.select_for_update().filter(
-                        producto=producto,
-                        ubicacion=origen
-                    ).first()
+                    stock_anterior = producto.stock_teorico
 
-                    # =====================================================
-                    # VALIDACIÓN 3: EL PRODUCTO DEBE EXISTIR EN EL ORIGEN
-                    # =====================================================
+                    # ==================================================
+                    # BUSCAR Y BLOQUEAR STOCK DE ORIGEN
+                    # ==================================================
+
+                    stock_origen = (
+                        StockUbicacion.objects
+                        .select_for_update()
+                        .filter(
+                            producto=producto,
+                            ubicacion=origen
+                        )
+                        .first()
+                    )
+
+                    # ==================================================
+                    # VALIDACIÓN 3: EXISTENCIA EN ORIGEN
+                    # ==================================================
 
                     if not stock_origen:
 
@@ -90,9 +114,9 @@ def registrar_transferencia(request):
                             {'form': form}
                         )
 
-                    # =====================================================
-                    # VALIDACIÓN 4: STOCK SUFICIENTE EN EL ORIGEN
-                    # =====================================================
+                    # ==================================================
+                    # VALIDACIÓN 4: STOCK SUFICIENTE
+                    # ==================================================
 
                     if cantidad > stock_origen.cantidad:
 
@@ -108,11 +132,12 @@ def registrar_transferencia(request):
                             {'form': form}
                         )
 
-                    # =====================================================
-                    # DESCONTAR DEL ORIGEN
-                    # =====================================================
+                    # ==================================================
+                    # DESCONTAR ORIGEN
+                    # ==================================================
 
                     stock_origen.cantidad -= cantidad
+
                     stock_origen.save(
                         update_fields=[
                             'cantidad',
@@ -120,23 +145,34 @@ def registrar_transferencia(request):
                         ]
                     )
 
-                    # =====================================================
-                    # BUSCAR / CREAR STOCK EN DESTINO
-                    # =====================================================
+                    # ==================================================
+                    # BUSCAR / CREAR DESTINO
+                    # ==================================================
 
-                    stock_destino, creado = StockUbicacion.objects.get_or_create(
-                        producto=producto,
-                        ubicacion=destino,
-                        defaults={
-                            'cantidad': 0
-                        }
+                    stock_destino = (
+                        StockUbicacion.objects
+                        .select_for_update()
+                        .filter(
+                            producto=producto,
+                            ubicacion=destino
+                        )
+                        .first()
                     )
 
-                    # =====================================================
-                    # SUMAR AL DESTINO
-                    # =====================================================
+                    if not stock_destino:
+
+                        stock_destino = StockUbicacion.objects.create(
+                            producto=producto,
+                            ubicacion=destino,
+                            cantidad=0
+                        )
+
+                    # ==================================================
+                    # SUMAR DESTINO
+                    # ==================================================
 
                     stock_destino.cantidad += cantidad
+
                     stock_destino.save(
                         update_fields=[
                             'cantidad',
@@ -144,15 +180,35 @@ def registrar_transferencia(request):
                         ]
                     )
 
-                    # =====================================================
-                    # GUARDAR HISTORIAL
-                    # =====================================================
+                    # ==================================================
+                    # GUARDAR TRANSFERENCIA
+                    # ==================================================
 
                     transferencia.save()
 
+                    # ==================================================
+                    # REGISTRAR EN KARDEX
+                    # ==================================================
+
+                    MovimientoInventario.objects.create(
+                        producto=producto,
+                        tipo='TRANSFERENCIA',
+                        cantidad=cantidad,
+                        stock_anterior=stock_anterior,
+                        stock_posterior=producto.stock_teorico,
+                        ubicacion=destino,
+                        ubicacion_origen=origen,
+                        ubicacion_destino=destino,
+                        motivo=transferencia.motivo,
+                        observacion=transferencia.observacion,
+                        usuario=request.user,
+                    )
+
                 messages.success(
                     request,
-                    'La transferencia se registró correctamente.'
+                    f'Transferencia registrada correctamente. '
+                    f'{cantidad} unidades trasladadas de '
+                    f'{origen} a {destino}.'
                 )
 
                 return redirect(
