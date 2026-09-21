@@ -13,14 +13,16 @@ if not SECRET_KEY:
     raise ValueError("Jefe, la SECRET_KEY no está configurada en las variables de entorno.")
 
 # 2. DEBUG: Solo True si lo especificas en el .env, por defecto es False.
-# DEBUG = os.getenv('DEBUG', 'False') == 'True'
-DEBUG = True  # Modificado temporalmente para depurar y ver el error real
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
-# 3. ALLOWED_HOSTS: Lista permitida.
+# 3. ALLOWED_HOSTS: Lista permitida dinámica
 ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    '172.16.40.183',
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        '127.0.0.1,localhost'
+    ).split(',')
+    if host.strip()
 ]
 
 INSTALLED_APPS = [
@@ -64,7 +66,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# 4. DATABASES: Usando variables de entorno para no exponer contraseñas en el repositorio.
+# 4. DATABASES: Usando variables de entorno
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -98,3 +100,14 @@ STATIC_URL = 'static/'
 LOGIN_URL = '/inventario/login/'  
 LOGIN_REDIRECT_URL = '/inventario/sesiones/'  
 LOGOUT_REDIRECT_URL = '/inventario/login/'
+
+# =========================================================
+# SEGURIDAD
+# =========================================================
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
