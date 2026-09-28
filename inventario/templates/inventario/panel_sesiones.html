@@ -3,177 +3,197 @@
 {% block title %}Selección de Sesión | Boccherini{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
+<div class="max-w-[1400px] w-full mx-auto space-y-5">
     
+    <!-- ===================================================== -->
     <!-- CABECERA -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+    <!-- ===================================================== -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div>
-            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Seleccione la Sesión de Trabajo</h2>
-            <p class="text-sm text-slate-500 mt-1">Elija o genere una sesión de control abierta para iniciar la lectura física.</p>
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="clock" class="w-6 h-6 text-[#0055A5]"></i>
+                Seleccione la Sesión de Trabajo
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+                Elija o genere una sesión de control abierta para iniciar la lectura física.
+            </p>
         </div>
         
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
             <!-- NUEVA SESIÓN -->
-            <form action="{% url 'inventario:crear_sesion' %}"
-                  method="POST"
-                  class="inline-block">
+            <form action="{% url 'inventario:crear_sesion' %}" method="POST" class="m-0">
                 {% csrf_token %}
                 <input type="hidden" name="nombre_sesion" value="">
-        
-                <button type="submit"
-                        class="inline-flex items-center space-x-1 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 rounded-xl shadow-md animacion-suave border-0 cursor-pointer">
-                    <span>➕</span>
-                    <span>Nueva Sesión</span>
+                <button type="submit" class="bg-[#2563EB] hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition shadow-sm font-semibold cursor-pointer">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    Nueva Sesión
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- 🔔 Panel para mostrar mensajes de éxito al aplicar el inventario -->
+    <!-- ===================================================== -->
+    <!-- MENSAJES -->
+    <!-- ===================================================== -->
     {% if messages %}
-    <div class="mb-6">
+    <div class="space-y-3 mb-6">
         {% for message in messages %}
-        <div class="p-4 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border border-rose-200{% else %}bg-emerald-50 text-emerald-700 border border-emerald-200{% endif %}">
-            <span>{% if message.tags == 'error' %}⚠️{% else %}✅{% endif %}</span>
-            {{ message }}
+        <div class="p-4 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm
+            {% if message.tags == 'error' %}
+                bg-rose-50 text-rose-800 border border-rose-200
+            {% else %}
+                bg-[#E6F7F0] text-emerald-800 border border-[#A3E6CD]
+            {% endif %}">
+            
+            {% if message.tags == 'error' %}
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
+            {% else %}
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+            {% endif %}
+            
+            <span>{{ message }}</span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div class="grid gap-6 sm:grid-cols-2">
+    <!-- ===================================================== -->
+    <!-- GRID DE SESIONES -->
+    <!-- ===================================================== -->
+    <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {% for sesion in sesiones %}
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm hover:border-boccherini-gold hover:-translate-y-0.5 animacion-suave">
+        <div class="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between shadow-sm hover:border-[#0055A5]/30 hover:shadow-md transition-all group">
             <div>
+                <!-- INSIGNIAS SUPERIORES -->
                 <div class="flex items-center justify-between mb-4">
-                    <span class="text-xs font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">ID: #{{ sesion.id }}</span>
+                    <span class="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">ID: #{{ sesion.id }}</span>
+                    
                     {% if sesion.estado == 'ABIERTA' %}
-                    <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center space-x-1">
-                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Abierta</span>
+                    <span class="bg-[#A3E6CD] text-emerald-900 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 w-fit">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                        Abierta
                     </span>
                     {% else %}
-                    <span class="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                        {{ sesion.estado|lower }}
+                    <span class="bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                        <i data-lucide="lock" class="w-3 h-3"></i> {{ sesion.estado|lower }}
                     </span>
                     {% endif %}
                 </div>
                 
-                <h3 class="text-lg font-bold text-slate-800 tracking-tight mb-1">{{ sesion.nombre|default:"Sesión sin descripción" }}</h3>
+                <!-- TÍTULO -->
+                <h3 class="text-base font-bold text-slate-800 tracking-tight mb-2">{{ sesion.nombre|default:"Sesión sin descripción" }}</h3>
                 
-                <p class="text-xs text-slate-400">
-                    Base:
-                    {% if sesion.base %}
-                        <span class="font-semibold text-slate-500">
-                            {{ sesion.base.nombre }}
-                        </span>
-                    {% else %}
-                        <span class="text-rose-500">
-                            Sin base asociada
-                        </span>
-                    {% endif %}
-                </p>
-                
-                <p class="text-xs text-slate-400 mt-1">
-                    Inicio: {{ sesion.fecha_inicio|date:"d/m/Y - h:i a" }}
-                </p>
-                
-                {% if sesion.fecha_fin %}
-                <p class="text-xs text-slate-400 mt-1">
-                    Fin: {{ sesion.fecha_fin|date:"d/m/Y - h:i a" }}
-                </p>
-                {% endif %}
-
-                <!-- NUEVO BLOQUE: Estado del ajuste (Ahora depende de la Base) -->
-                {% if sesion.base %}
-                    {% if sesion.base.conciliacion_aplicada %}
-                    <p class="text-xs text-emerald-600 font-semibold mt-1">
-                        ✓ Base conciliada
-                        {% if sesion.base.fecha_conciliacion %}
-                            · {{ sesion.base.fecha_conciliacion|date:"d/m/Y - h:i a" }}
+                <!-- DETALLES DE LA BASE -->
+                <p class="text-xs text-slate-500 flex items-start gap-1">
+                    <i data-lucide="database" class="w-3.5 h-3.5 mt-0.5 text-slate-400"></i>
+                    <span>Base:
+                        {% if sesion.base %}
+                            <span class="font-bold text-slate-700">{{ sesion.base.nombre }}</span>
+                        {% else %}
+                            <span class="font-bold text-rose-500">Sin base asociada</span>
                         {% endif %}
+                    </span>
+                </p>
+                
+                <!-- FECHAS -->
+                <div class="mt-3 space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <p class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                        <i data-lucide="calendar-plus" class="w-3.5 h-3.5 text-slate-400"></i>
+                        Inicio: <span class="font-medium text-slate-700">{{ sesion.fecha_inicio|date:"d/m/Y - h:i a" }}</span>
                     </p>
-                    {% else %}
-                    <p class="text-xs text-amber-600 font-semibold mt-1">
-                        ⚠ Base sin conciliar
+                    {% if sesion.fecha_fin %}
+                    <p class="text-[11px] text-slate-500 flex items-center gap-1.5">
+                        <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                        Fin: <span class="font-medium text-slate-700">{{ sesion.fecha_fin|date:"d/m/Y - h:i a" }}</span>
                     </p>
                     {% endif %}
-                {% else %}
-                    <p class="text-xs text-slate-400 mt-1 italic">
-                        Requiere base para conciliar
-                    </p>
-                {% endif %}
-                
+                </div>
+
+                <!-- ESTADO DEL AJUSTE / CONCILIACIÓN -->
+                <div class="mt-3">
+                    {% if sesion.base %}
+                        {% if sesion.base.conciliacion_aplicada %}
+                        <p class="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-1.5 rounded-lg border border-emerald-100 font-semibold flex items-center gap-1.5">
+                            <i data-lucide="check" class="w-3.5 h-3.5"></i> Base conciliada
+                            {% if sesion.base.fecha_conciliacion %}
+                                <span class="text-emerald-600/70 ml-auto font-medium">· {{ sesion.base.fecha_conciliacion|date:"d/m/Y - h:i a" }}</span>
+                            {% endif %}
+                        </p>
+                        {% else %}
+                        <p class="text-[11px] text-amber-700 bg-amber-50 px-2 py-1.5 rounded-lg border border-amber-100 font-semibold flex items-center gap-1.5">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Base sin conciliar
+                        </p>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-[11px] text-slate-400 italic px-2 py-1.5 flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-3.5 h-3.5"></i> Requiere base para conciliar
+                        </p>
+                    {% endif %}
+                </div>
             </div>
             
-            <!-- Contenedor de Acciones -->
-            <div class="mt-6 border-t border-slate-100 pt-4 flex flex-col gap-2">
+            <!-- ===================================================== -->
+            <!-- ACCIONES -->
+            <!-- ===================================================== -->
+            <div class="mt-5 border-t border-slate-100 pt-4 flex flex-col gap-2">
+                
                 {% if sesion.estado == 'ABIERTA' %}
-                    <!-- Fila Principal: Acceso directo al flujo del operario -->
-                    <a href="{% url 'inventario:pantalla_escaner' sesion.id %}" class="w-full inline-flex items-center justify-center bg-boccherini-blue hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors shadow-sm tracking-wide text-center">
-                        🎯 Entrar a Escanear
+                    <!-- ACCESO PRINCIPAL -->
+                    <a href="{% url 'inventario:pantalla_escaner' sesion.id %}" class="w-full inline-flex items-center justify-center bg-[#0A192F] hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-[11px] uppercase tracking-wider transition-colors shadow-sm gap-2">
+                        <i data-lucide="scan-line" class="w-4 h-4"></i> Entrar a Escanear
                     </a>
                     
-                    <!-- Fila Secundaria: Herramientas de control en vivo, conciliación, cierre y eliminar -->
+                    <!-- ACCIONES SECUNDARIAS -->
                     <div class="flex gap-2">
-                        <a href="{% url 'inventario:exportar_conteo_csv' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-slate-600 hover:bg-slate-700 text-white font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center" title="Descargar avance actual en CSV">
-                            📊 CSV
+                        <a href="{% url 'inventario:exportar_conteo_csv' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors gap-1.5" title="Descargar avance actual en CSV">
+                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> CSV
                         </a>
                         
-                        <!-- ⚖️ Botón: Conciliación (Apunta a la base general) -->
                         {% if sesion.base %}
-                        <a href="{% url 'inventario:conciliacion_base' sesion.base.id %}" class="flex-[1.5] inline-flex items-center justify-center bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center" title="Ver diferencias generales y aplicar">
-                            ⚖️ Conciliar
+                        <a href="{% url 'inventario:conciliacion_base' sesion.base.id %}" class="flex-[1.5] inline-flex items-center justify-center bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold py-2 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors gap-1.5" title="Ver diferencias generales y aplicar">
+                            <i data-lucide="scale" class="w-3.5 h-3.5"></i> Conciliar
                         </a>
                         {% endif %}
 
-                        <!-- CERRAR SESIÓN -->
-                        <form method="POST"
-                              action="{% url 'inventario:cerrar_sesion' sesion.id %}"
-                              class="flex-1"
-                              onsubmit="return confirm('¿Seguro que deseas cerrar esta sesión de inventario? La sesión quedará finalizada y ya no podrá continuar el conteo.');">
+                        <form method="POST" action="{% url 'inventario:cerrar_sesion' sesion.id %}" class="flex-1" onsubmit="return confirm('¿Seguro que deseas cerrar esta sesión de inventario? La sesión quedará finalizada y ya no podrá continuar el conteo.');">
                             {% csrf_token %}
-                            <button type="submit"
-                                    class="w-full inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors border border-rose-200 shadow-sm text-center"
-                                    title="Finalizar esta sesión de inventario">
-                                🔒 Cerrar
+                            <button type="submit" class="w-full inline-flex items-center justify-center bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold py-2 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors gap-1.5" title="Finalizar esta sesión de inventario">
+                                <i data-lucide="lock" class="w-3.5 h-3.5"></i> Cerrar
                             </button>
                         </form>
 
-                        <!-- BOTÓN ELIMINAR (Solo Superuser) -->
                         {% if request.user.is_superuser %}
                         <form method="post" action="{% url 'inventario:eliminar_sesion' sesion.id %}" class="flex flex-1">
                             {% csrf_token %}
-                            <button type="submit" class="w-full inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center" onclick="return confirm('¿Eliminar esta sesión? Esta acción no se puede deshacer.')" title="Eliminar permanentemente">
-                                🗑️ Eli.
+                            <button type="submit" class="w-full inline-flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors gap-1.5" onclick="return confirm('¿Eliminar esta sesión? Esta acción no se puede deshacer.')" title="Eliminar permanentemente">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eli.
                             </button>
                         </form>
                         {% endif %}
                     </div>
+                
                 {% else %}
-                    <!-- Estado Cerrado: Bloqueo visual + Conciliación Histórica + CSV + Eliminar -->
+                    <!-- ESTADO CERRADA -->
                     <div class="flex gap-2 w-full">
-                        <div class="flex-1 inline-flex items-center justify-center bg-slate-50 text-slate-400 font-medium py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider border border-slate-200 select-none">
-                            ⛔ Cerrada
+                        <div class="flex-1 inline-flex items-center justify-center bg-slate-50 text-slate-400 font-semibold py-2.5 px-1 rounded-xl text-[10px] uppercase tracking-wider border border-slate-200 select-none gap-1.5">
+                            <i data-lucide="ban" class="w-3.5 h-3.5"></i> Cerrada
                         </div>
                         
-                        <!-- ⚖️ Botón HISTÓRICO: Ver cómo quedó el inventario de la base -->
                         {% if sesion.base %}
-                        <a href="{% url 'inventario:conciliacion_base' sesion.base.id %}" class="flex-1 inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center">
-                            ⚖️ Ver Base
+                        <a href="{% url 'inventario:conciliacion_base' sesion.base.id %}" class="flex-[1.5] inline-flex items-center justify-center bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors shadow-sm gap-1.5">
+                            <i data-lucide="database" class="w-3.5 h-3.5"></i> Ver Base
                         </a>
                         {% endif %}
 
-                        <a href="{% url 'inventario:exportar_conteo_csv' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center">
-                            📊 CSV
+                        <a href="{% url 'inventario:exportar_conteo_csv' sesion.id %}" class="flex-1 inline-flex items-center justify-center bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold py-2.5 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors gap-1.5">
+                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> CSV
                         </a>
 
-                        <!-- BOTÓN ELIMINAR (Solo Superuser) -->
                         {% if request.user.is_superuser %}
                         <form method="post" action="{% url 'inventario:eliminar_sesion' sesion.id %}" class="flex flex-1">
                             {% csrf_token %}
-                            <button type="submit" class="w-full inline-flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-1 rounded-xl text-[10px] sm:text-xs uppercase tracking-wider transition-colors shadow-sm gap-1 text-center" onclick="return confirm('¿Eliminar esta sesión? Esta acción no se puede deshacer.')" title="Eliminar permanentemente">
-                                🗑️ Eliminar
+                            <button type="submit" class="w-full inline-flex items-center justify-center bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2.5 px-1 rounded-xl text-[10px] uppercase tracking-wider transition-colors gap-1.5" onclick="return confirm('¿Eliminar esta sesión? Esta acción no se puede deshacer.')" title="Eliminar permanentemente">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
                             </button>
                         </form>
                         {% endif %}
@@ -181,16 +201,24 @@
                 {% endif %}
             </div>
         </div>
+        
         {% empty %}
-        <div class="col-span-2 bg-white rounded-2xl border border-slate-200/80 p-12 text-center max-w-lg mx-auto w-full shadow-sm">
-            <span class="text-4xl block mb-4">📂</span>
+        <!-- ===================================================== -->
+        <!-- ESTADO VACÍO (SIN SESIONES) -->
+        <!-- ===================================================== -->
+        <div class="col-span-full bg-slate-50/50 rounded-2xl p-12 text-center flex flex-col items-center justify-center border border-slate-200 border-dashed">
+            <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-slate-300">
+                <i data-lucide="folder-open" class="w-8 h-8"></i>
+            </div>
             <h4 class="text-base font-bold text-slate-800">No hay tramas de control cargadas</h4>
-            <p class="text-xs text-slate-400 mt-1 mb-6 max-w-xs mx-auto">Para habilitar el escáner de códigos de barras, debe generar una sesión de control.</p>
+            <p class="text-xs text-slate-500 mt-1 mb-6 max-w-sm mx-auto">
+                Para habilitar el escáner de códigos de barras, debe generar una sesión de control.
+            </p>
             
             <form action="{% url 'inventario:crear_sesion' %}" method="POST">
                 {% csrf_token %}
-                <button type="submit" class="text-sm font-bold text-boccherini-gold hover:text-amber-600 underline bg-transparent border-0 cursor-pointer">
-                    Crear una sesión de control inicial ahora &rarr;
+                <button type="submit" class="text-sm font-bold text-[#2563EB] hover:text-blue-700 transition-colors flex items-center justify-center gap-1.5 mx-auto bg-transparent border-0 cursor-pointer p-0">
+                    Crear una sesión de control inicial ahora <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </button>
             </form>
         </div>

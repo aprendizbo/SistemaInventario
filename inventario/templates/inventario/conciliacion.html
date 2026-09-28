@@ -3,30 +3,41 @@
 {% block title %}Conciliación de Base | Boccherini{% endblock %}
 
 {% block content %}
-<div class="max-w-full mx-auto">
+<div class="max-w-[1500px] w-full mx-auto space-y-6 pb-12">
     
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+    <!-- ================= HEADER ================= -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
         <div>
-            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Conciliación de Base General</h2>
-            <p class="text-sm text-slate-500 mt-1">
-                Base: <span class="font-bold text-slate-700">{{ base.nombre }}</span> 
-                | Estado: 
-                <span class="font-bold {% if base.estado == 'CERRADA' %}text-rose-600{% else %}text-emerald-600{% endif %}">
+            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="git-merge" class="w-7 h-7 text-[#0055A5]"></i>
+                Conciliación de Base General
+            </h2>
+            <p class="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                Base: <strong class="text-slate-800">{{ base.nombre }}</strong> 
+                <span class="text-slate-300">|</span> 
+                Estado: 
+                <span class="inline-flex items-center gap-1 font-bold {% if base.estado == 'CERRADA' %}text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100{% else %}text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100{% endif %}">
+                    {% if base.estado == 'CERRADA' %}
+                        <i data-lucide="lock" class="w-3.5 h-3.5"></i>
+                    {% else %}
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    {% endif %}
                     {{ base.get_estado_display }}
                 </span>
             </p>
         </div>
+        
         <div class="flex items-center gap-3">
-            <a href="{% url 'inventario:bases_productos' %}" class="px-4 py-2 bg-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-300 transition-colors text-sm">
-                Volver a Bases
+            <a href="{% url 'inventario:bases_productos' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg flex items-center gap-2 transition font-bold text-xs shadow-sm border border-slate-200">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a Bases
             </a>
             
             {% if base.estado == 'ACTIVA' %}
-
                 {% if not base.conciliacion_aplicada %}
                 <form
                     action="{% url 'inventario:aplicar_conciliacion_base' base.id %}"
                     method="POST"
+                    class="m-0"
                     onsubmit="return confirm(
                         '¿Confirmas la aplicación de la conciliación?\n\n' +
                         'Esto registrará la conciliación final de la base.\n\n' +
@@ -36,97 +47,130 @@
             
                     <button
                         type="submit"
-                        class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition-all text-sm"
+                        class="inline-flex items-center gap-2 bg-[#2563EB] hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-lg shadow-sm transition-all text-xs cursor-pointer border-0"
                     >
-                        <span>✓</span>
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
                         <span>Aplicar Conciliación</span>
                     </button>
                 </form>
             
                 {% else %}
             
-                <span class="inline-flex items-center space-x-2 bg-emerald-100 text-emerald-700 font-bold px-5 py-2.5 rounded-xl text-sm border border-emerald-200">
-                    <span>✓</span>
+                <span class="inline-flex items-center gap-2 bg-[#def7ec] text-[#046c4e] font-bold px-5 py-2.5 rounded-lg text-xs border border-[#84e1bc] cursor-default">
+                    <i data-lucide="check-check" class="w-4 h-4"></i>
                     <span>Conciliación Aplicada</span>
                 </span>
             
                 {% endif %}
-            
             {% endif %}
         </div>
     </div>
 
-    <!-- Alertas Django -->
+    <!-- ================= MENSAJES DJANGO ================= -->
     {% if messages %}
-    <div class="mb-4">
+    <div class="space-y-3">
         {% for message in messages %}
-        <div class="p-4 rounded-xl text-sm font-bold {% if message.tags == 'error' %}bg-rose-100 text-rose-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
-            {{ message }}
+        <div class="p-4 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm
+            {% if message.tags == 'error' %}
+                bg-rose-50 text-rose-800 border border-rose-200
+            {% else %}
+                bg-[#E6F7F0] text-emerald-800 border border-[#A3E6CD]
+            {% endif %}">
+            
+            {% if message.tags == 'error' %}
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
+            {% else %}
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+            {% endif %}
+            
+            <span>{{ message }}</span>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
+    <!-- ================= TABLA DE DATOS ================= -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        
+        <div class="bg-[#0A192F] px-6 py-3 border-b border-slate-700 flex items-center justify-between">
+            <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="table-2" class="w-4 h-4 text-slate-300"></i> Detalle de Consenso
+            </h3>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
-                    <tr class="bg-slate-800 text-white text-xs font-bold uppercase tracking-wider">
-                        <th class="px-6 py-4 whitespace-nowrap">Código</th>
-                        <th class="px-6 py-4">Producto</th>
-                        <th class="px-6 py-4 text-center bg-slate-700 border-r border-slate-600">Stock Sistema</th>
+                    <tr class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
+                        <th class="px-5 py-4 whitespace-nowrap">Código</th>
+                        <th class="px-5 py-4">Producto</th>
+                        <th class="px-5 py-4 text-center bg-slate-100/50 border-r border-l border-slate-200">Stock Sistema</th>
                         
                         <!-- Columnas dinámicas según el número de sesiones en la base -->
                         {% for sesion in sesiones %}
-                        <th class="px-6 py-4 text-center bg-slate-700/80">{{ sesion.nombre }}</th>
+                        <th class="px-5 py-4 text-center bg-blue-50/30">{{ sesion.nombre }}</th>
                         {% endfor %}
                         
-                        <th class="px-6 py-4 text-center bg-slate-800 border-l border-slate-600">Estado</th>
+                        <th class="px-5 py-4 text-center bg-slate-100/50 border-l border-slate-200">Estado</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
                     {% for item in resultados %}
                     <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 font-mono font-bold text-slate-700 whitespace-nowrap">{{ item.producto.codigo_barras }}</td>
-                        <td class="px-6 py-4 text-slate-600 min-w-[200px]">{{ item.producto.descripcion }}</td>
-                        <td class="px-6 py-4 text-center font-bold text-slate-400 border-r border-slate-100">{{ item.stock_sistema }}</td>
+                        <td class="px-5 py-4 font-mono font-bold text-slate-900 whitespace-nowrap">{{ item.producto.codigo_barras }}</td>
+                        <td class="px-5 py-4 font-semibold text-slate-700 min-w-[200px]">{{ item.producto.descripcion }}</td>
+                        <td class="px-5 py-4 text-center font-black text-lg text-slate-800 border-r border-l border-slate-100 bg-slate-50/30">{{ item.stock_sistema }}</td>
                         
                         <!-- Mostrando los datos dinámicos de cada sesión para este producto -->
                         {% for sesion_info in item.sesiones %}
-                        <td class="px-6 py-4 text-center font-bold text-boccherini-blue">
+                        <td class="px-5 py-4 text-center">
                             {% if sesion_info.cantidad is not None %}
-                                <span class="text-base">{{ sesion_info.cantidad }}</span>
+                                <div class="font-black text-lg text-[#2563EB]">{{ sesion_info.cantidad }}</div>
                                 
                                 <!-- Diferencia individual vs Stock Sistema -->
-                                {% if sesion_info.diferencia != 0 %}
-                                <span class="block text-xs font-normal mt-1 {% if sesion_info.diferencia > 0 %}text-emerald-500{% else %}text-rose-500{% endif %}">
-                                    {% if sesion_info.diferencia > 0 %}+{% endif %}{{ sesion_info.diferencia }}
-                                </span>
-                                {% else %}
-                                <span class="block text-xs font-normal mt-1 text-slate-300">OK</span>
-                                {% endif %}
+                                <div class="mt-1">
+                                    {% if sesion_info.diferencia != 0 %}
+                                        <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full {% if sesion_info.diferencia > 0 %}bg-[#fdf6b2] text-[#92400e]{% else %}bg-[#fde8e8] text-[#c81e1e]{% endif %}">
+                                            {% if sesion_info.diferencia > 0 %}+{% endif %}{{ sesion_info.diferencia }}
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#def7ec] text-[#046c4e]">
+                                            ✓ OK
+                                        </span>
+                                    {% endif %}
+                                </div>
                                 
                             {% else %}
-                                <span class="text-slate-300">-</span>
+                                <span class="text-slate-300 italic text-xs">-</span>
                             {% endif %}
                         </td>
                         {% endfor %}
                         
                         <!-- Estado de Consenso -->
-                        <td class="px-6 py-4 text-center font-bold border-l border-slate-100">
+                        <td class="px-5 py-4 text-center border-l border-slate-100 bg-slate-50/30">
                             {% if item.estado == 'CONSENSO' %}
-                                <span class="inline-block w-full text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full text-xs border border-emerald-200">CONSENSO</span>
+                                <span class="inline-flex items-center justify-center w-full bg-[#def7ec] text-[#046c4e] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-[#84e1bc]">
+                                    CONSENSO
+                                </span>
                             {% elif item.estado == 'DIFERENCIA' %}
-                                <span class="inline-block w-full text-rose-700 bg-rose-100 px-3 py-1 rounded-full text-xs border border-rose-200">DIFERENCIA</span>
+                                <span class="inline-flex items-center justify-center w-full bg-[#fde8e8] text-[#c81e1e] px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-[#f8b4b4]">
+                                    DIFERENCIA
+                                </span>
                             {% else %}
-                                <span class="inline-block w-full text-slate-500 bg-slate-100 px-3 py-1 rounded-full text-xs border border-slate-200">SIN CONTEO</span>
+                                <span class="inline-flex items-center justify-center w-full bg-slate-100 text-slate-500 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border border-slate-200">
+                                    SIN CONTEO
+                                </span>
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="100%" class="px-6 py-12 text-center text-slate-400 italic">
-                            No hay datos para conciliar. Verifica que haya stock o conteos registrados en esta base.
+                        <td colspan="100%" class="px-6 py-16 text-center bg-slate-50/50">
+                            <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-300 border border-slate-200">
+                                <i data-lucide="file-warning" class="w-8 h-8"></i>
+                            </div>
+                            <strong class="block text-slate-800 text-sm mb-1">No hay datos para conciliar</strong>
+                            <p class="text-xs text-slate-500">Verifica que haya stock o conteos registrados en esta base.</p>
                         </td>
                     </tr>
                     {% endfor %}

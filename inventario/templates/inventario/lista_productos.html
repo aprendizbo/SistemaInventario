@@ -3,296 +3,250 @@
 {% block title %}Maestro de Productos | Boccherini{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
+<div class="max-w-[1400px] w-full mx-auto space-y-6 pb-12">
     
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+    <!-- ================= ENCABEZADO Y ACCIONES PRINCIPALES ================= -->
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
         <div>
-            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Maestro de Productos</h2>
+            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="packages" class="w-7 h-7 text-[#0055A5]"></i>
+                Maestro de Productos
+            </h2>
             <p class="text-sm text-slate-500 mt-1">Lista general de artículos maestros importados y sincronizados.</p>
         </div>
         
-        <div class="flex flex-wrap items-center gap-3">
-            <button onclick="abrirModalAdmin()" class="inline-flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm border border-slate-700 cursor-pointer">
-                <span>⚙️</span> <span>Administración</span>
+        <div class="flex flex-wrap items-center gap-2">
+            <button onclick="abrirModalAdmin()" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-lg transition-colors text-xs border border-slate-200 cursor-pointer shadow-sm">
+                <i data-lucide="settings" class="w-4 h-4"></i> Administración
             </button>
             
-            <a href="{% url 'inventario:importar_productos' %}" class="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm cursor-pointer">
-                <span>📥</span> <span>Importar Excel</span>
+            <a href="{% url 'inventario:importar_productos' %}" class="inline-flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-[#2563EB] font-bold px-4 py-2.5 rounded-lg transition-colors text-xs border border-blue-200 cursor-pointer shadow-sm">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i> Importar Excel
             </a>
 
-            <!-- NUEVO: Botón para Exportar el Maestro a Excel -->
-            <a href="{% url 'inventario:exportar_excel' %}" class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm cursor-pointer">
-                <span>📤</span> <span>Exportar Excel</span>
+            <a href="{% url 'inventario:exportar_excel' %}" class="inline-flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-4 py-2.5 rounded-lg transition-colors text-xs border border-emerald-200 cursor-pointer shadow-sm">
+                <i data-lucide="download-cloud" class="w-4 h-4"></i> Exportar Excel
             </a>
 
-            <a href="{% url 'inventario:panel_sesiones' %}" class="inline-flex items-center space-x-2 bg-gradient-to-r from-amber-500 to-boccherini-gold text-white font-bold px-5 py-2.5 rounded-xl shadow-md hover:opacity-90 animacion-suave text-sm">
-                <span>📷 Ir a Escanear Códigos</span>
-                <span>&rarr;</span>
+            <a href="{% url 'inventario:panel_sesiones' %}" class="inline-flex items-center gap-2 bg-[#2563EB] text-white font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-blue-700 transition-colors text-xs cursor-pointer border-0">
+                <i data-lucide="scan-barcode" class="w-4 h-4"></i> Ir a Escanear Códigos <i data-lucide="arrow-right" class="w-3.5 h-3.5 ml-1"></i>
             </a>
         </div>
     </div>
 
-    <!-- BASE DE INVENTARIO ACTIVA -->
+    <!-- ================= BASE DE INVENTARIO ACTIVA ================= -->
     {% if base_activa %}
-    <div class="mb-6 bg-white rounded-2xl shadow-md border border-emerald-200 overflow-hidden">
-        <div class="px-6 py-4 flex items-center justify-between bg-emerald-50">
+    <div class="bg-white rounded-xl shadow-sm border border-[#A3E6CD] overflow-hidden flex items-stretch">
+        <div class="w-2 bg-emerald-500"></div>
+        <div class="p-5 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#E6F7F0]/30">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">
-                    Base de inventario activa
+                <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 mb-1 flex items-center gap-1.5">
+                    <i data-lucide="database" class="w-3.5 h-3.5"></i> Base de inventario activa
                 </p>
-
-                <h3 class="text-lg font-extrabold text-slate-800 mt-1">
+                <h3 class="text-lg font-black text-slate-800">
                     {{ base_activa.nombre }}
                 </h3>
-
                 <p class="text-xs text-slate-500 mt-1">
-                    Creada el {{ base_activa.fecha_creacion|date:"d/m/Y H:i" }}
-                    por {{ base_activa.creado_por }}
+                    Creada el <strong class="text-slate-700">{{ base_activa.fecha_creacion|date:"d/m/Y H:i" }}</strong>
+                    por <strong class="text-slate-700">{{ base_activa.creado_por }}</strong>
                 </p>
             </div>
-
-            <span class="inline-flex items-center px-3 py-1 rounded-full
-                         bg-emerald-100 text-emerald-700
-                         text-xs font-extrabold uppercase">
-                ● ACTIVA
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#A3E6CD] text-emerald-900 text-[10px] font-bold uppercase tracking-wider shadow-sm border border-[#84e1bc]">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> ACTIVA
             </span>
         </div>
     </div>
     {% else %}
-    <div class="mb-6 bg-white rounded-2xl shadow-md border border-red-200 overflow-hidden">
-        <div class="px-6 py-4 bg-red-50">
-            <p class="text-xs font-bold uppercase tracking-wider text-red-600">
-                Sin base de inventario activa
-            </p>
-
-            <h3 class="text-lg font-extrabold text-red-800 mt-1">
-                No hay una base abierta
-            </h3>
-
-            <p class="text-sm text-red-600 mt-1">
-                Debe crear una base de inventario antes de importar productos.
-            </p>
-
-            <a href="{% url 'inventario:panel_sesiones' %}"
-               class="inline-flex mt-4 items-center bg-red-600 hover:bg-red-700
-                      text-white font-bold px-4 py-2 rounded-lg text-sm">
-                Ir a Control de Sesiones →
+    <div class="bg-white rounded-xl shadow-sm border border-rose-200 overflow-hidden flex items-stretch">
+        <div class="w-2 bg-rose-500"></div>
+        <div class="p-5 flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-rose-50/50">
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-wider text-rose-600 mb-1 flex items-center gap-1.5">
+                    <i data-lucide="alert-octagon" class="w-3.5 h-3.5"></i> Sin base de inventario activa
+                </p>
+                <h3 class="text-lg font-black text-rose-800">
+                    No hay una base abierta
+                </h3>
+                <p class="text-xs text-rose-600 mt-1">
+                    Debe crear una base de inventario antes de importar productos.
+                </p>
+            </div>
+            <a href="{% url 'inventario:panel_sesiones' %}" class="inline-flex items-center gap-2 bg-[#8D2733] hover:bg-rose-900 text-white font-bold px-4 py-2.5 rounded-lg text-xs shadow-sm transition-colors whitespace-nowrap">
+                Ir a Control de Sesiones <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </a>
         </div>
     </div>
     {% endif %}
 
-    <!-- ==========================================
-         OPERACIONES DE INVENTARIO
-    ========================================== -->
-    <div class="mb-6">
-        <div class="bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden">
+    <!-- ================= OPERACIONES DE INVENTARIO CON COLORES UNIFICADOS ================= -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <div>
+                <h3 class="text-[11px] font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i> Operaciones de inventario
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                    Gestión de entradas, salidas, transferencias y movimientos de inventario.
+                </p>
+            </div>
+            <span class="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-[#2563EB] border border-blue-100 text-[9px] font-extrabold uppercase tracking-wider">
+                Operaciones
+            </span>
+        </div>
 
-            <!-- ENCABEZADO -->
-            <div class="px-6 py-4 bg-slate-50 border-b border-slate-200">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-sm font-extrabold text-slate-800 uppercase tracking-wider">
-                            Operaciones de inventario
-                        </h3>
-
-                        <p class="text-xs text-slate-500 mt-1">
-                            Gestión de entradas, salidas, transferencias y movimientos de inventario.
-                        </p>
+        <div class="p-5">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <!-- ENTRADAS (Verde corporativo) -->
+                <a href="{% url 'inventario:registrar_entrada' %}" class="flex flex-col items-center justify-center gap-2 bg-[#287560] hover:bg-[#1f5c4b] text-white font-bold p-4 rounded-xl shadow-sm transition-all text-xs text-center group border border-[#1f5c4b]">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="arrow-down-to-line" class="w-5 h-5 text-white"></i>
                     </div>
+                    <span>Entradas</span>
+                </a>
 
-                    <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full
-                                 bg-blue-50 text-blue-700 border border-blue-100
-                                 text-[10px] font-extrabold uppercase tracking-wider">
-                        Operaciones
-                    </span>
-                </div>
+                <!-- SALIDAS (Rojo corporativo) -->
+                <a href="{% url 'inventario:registrar_salida' %}" class="flex flex-col items-center justify-center gap-2 bg-[#8D2733] hover:bg-[#701e28] text-white font-bold p-4 rounded-xl shadow-sm transition-all text-xs text-center group border border-[#701e28]">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="arrow-up-from-line" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span>Salidas</span>
+                </a>
+                
+                <!-- TRANSFERENCIAS (Mostaza corporativo) -->
+                <a href="{% url 'inventario:lista_transferencias' %}" class="flex flex-col items-center justify-center gap-2 bg-[#BB8E3B] hover:bg-[#9c752e] text-white font-bold p-4 rounded-xl shadow-sm transition-all text-xs text-center group border border-[#9c752e]">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="arrow-right-left" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span>Transferencias</span>
+                </a>
+                
+                <!-- KARDEX (Azul Oscuro corporativo) -->
+                <a href="{% url 'inventario:kardex' %}" class="flex flex-col items-center justify-center gap-2 bg-[#223145] hover:bg-[#182332] text-white font-bold p-4 rounded-xl shadow-sm transition-all text-xs text-center group border border-[#182332]">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="history" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span>Kardex</span>
+                </a>
+
+                <!-- INVENTARIO OPERATIVO (Color de acento institucional) -->
+                <a href="{% url 'inventario:inventario_operativo' %}" class="flex flex-col items-center justify-center gap-2 bg-[#0A192F] hover:bg-black border border-[#0A192F] text-white font-bold p-4 rounded-xl shadow-sm transition-all text-xs text-center group md:col-span-3 lg:col-span-1">
+                    <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="layout-list" class="w-5 h-5 text-white"></i>
+                    </div>
+                    <span>Inventario operativo</span>
+                </a>
             </div>
-
-            <!-- BOTONES -->
-            <div class="p-5">
-                <div class="flex flex-wrap gap-3">
-
-                    <!-- ENTRADAS -->
-                    <a
-                        href="{% url 'inventario:registrar_entrada' %}"
-                        class="inline-flex items-center gap-2
-                               bg-emerald-600 hover:bg-emerald-700
-                               text-white font-bold
-                               px-5 py-3 rounded-xl
-                               shadow-sm hover:shadow-md
-                               transition-all duration-200
-                               text-sm"
-                    >
-                        <span class="text-lg leading-none">+</span>
-                        <span>Entradas</span>
-                    </a>
-
-                    <!-- SALIDAS -->
-                    <a
-                        href="{% url 'inventario:registrar_salida' %}"
-                        class="inline-flex items-center gap-2
-                               bg-rose-600 hover:bg-rose-700
-                               text-white font-bold
-                               px-5 py-3 rounded-xl
-                               shadow-sm hover:shadow-md
-                               transition-all duration-200
-                               text-sm"
-                    >
-                        <span class="text-lg leading-none">−</span>
-                        <span>Salidas</span>
-                    </a>
-                    
-                    <!-- TRANSFERENCIAS -->
-                    <a
-                        href="{% url 'inventario:lista_transferencias' %}"
-                        class="inline-flex items-center gap-2
-                               bg-blue-600 hover:bg-blue-700
-                               text-white font-bold
-                               px-5 py-3 rounded-xl
-                               shadow-sm hover:shadow-md
-                               transition-all duration-200
-                               text-sm"
-                    >
-                        <span class="text-lg leading-none">⇄</span>
-                        <span>Transferencias</span>
-                    </a>
-                    
-                    <!-- KARDEX -->
-                    <a
-                        href="{% url 'inventario:kardex' %}"
-                        class="inline-flex items-center gap-2
-                               bg-violet-600 hover:bg-violet-700
-                               text-white font-bold
-                               px-5 py-3 rounded-xl
-                               shadow-sm hover:shadow-md
-                               transition-all duration-200
-                               text-sm"
-                    >
-                        <span class="text-lg leading-none">▤</span>
-                        <span>Kardex</span>
-                    </a>
-
-                    <!-- INVENTARIO OPERATIVO -->
-                    <a href="{% url 'inventario:inventario_operativo' %}"
-                       class="inline-flex items-center gap-2
-                              bg-slate-700 hover:bg-slate-800
-                              text-white
-                              border border-slate-700
-                              font-bold px-5 py-3 rounded-xl
-                              shadow-sm hover:shadow-md
-                              transition-all duration-200
-                              text-sm">
-                        <span class="text-lg leading-none">▣</span>
-                        <span>Inventario operativo</span>
-                    </a>
-
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- ==========================================
-         BÚSQUEDA DE PRODUCTOS
-    ========================================== -->
-    <div class="mb-6 max-w-xl">
-        <form method="GET" action="{% url 'inventario:lista_productos' %}" class="flex gap-2">
-            <div class="relative rounded-xl shadow-sm flex-grow">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                    🔍
+    <!-- ================= BÚSQUEDA DE PRODUCTOS ================= -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <form method="GET" action="{% url 'inventario:lista_productos' %}" class="flex flex-col sm:flex-row gap-3 m-0">
+            <div class="relative flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-4 h-4"></i>
                 </div>
                 <input type="text" name="q" value="{{ query }}" placeholder="Buscar por descripción o código..." 
-                        class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm transition-all text-slate-700 shadow-sm">
+                       class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm transition-all text-slate-700 shadow-sm">
             </div>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md transition-colors text-sm">
-                Buscar
-            </button>
-            
-            {% if query %}
-            <a href="{% url 'inventario:lista_productos' %}" class="bg-red-50 hover:bg-red-100 text-red-600 font-bold px-4 py-2.5 rounded-xl border border-red-200 shadow-sm transition-colors text-sm flex items-center">
-                ✖ Limpiar
-            </a>
-            {% endif %}
+            <div class="flex items-center gap-2">
+                <button type="submit" class="w-full sm:w-auto bg-[#2563EB] hover:bg-blue-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm transition-colors text-sm border-0 cursor-pointer flex items-center justify-center gap-2">
+                    <i data-lucide="search" class="w-4 h-4"></i> Buscar
+                </button>
+                
+                {% if query %}
+                <a href="{% url 'inventario:lista_productos' %}" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold px-4 py-2.5 rounded-xl border border-rose-200 shadow-sm transition-colors text-sm">
+                    <i data-lucide="x" class="w-4 h-4"></i> Limpiar
+                </a>
+                {% endif %}
+            </div>
         </form>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 overflow-hidden">
-        <div class="bg-boccherini-blue px-6 py-4 flex items-center justify-between" style="background-color: #0b2240;">
-            <h3 class="text-white font-bold text-base tracking-wide">
+    <!-- ================= TABLA DE PRODUCTOS ================= -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <div class="bg-[#0A192F] px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700">
+            <h3 class="text-white font-bold text-sm tracking-wide flex items-center gap-2">
+                <i data-lucide="database" class="w-4 h-4 text-slate-300"></i>
                 {% if query %}Resultados para: "{{ query }}"{% else %}Base de Datos de Artículos{% endif %}
             </h3>
-            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-widest text-center">
-                ● Conexión Activa MariaDB
+            <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-widest text-center flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Conexión Activa MariaDB
             </span>
         </div>
 
         <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            <table class="w-full text-left border-collapse min-w-[1000px]">
                 <thead>
-                    <tr class="bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
+                    <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                         <th class="px-6 py-4">Código de Barras</th>
                         <th class="px-6 py-4">Descripción del Producto</th>
                         <th class="px-6 py-4 text-center">Stock Teórico Global</th>
-                        <th class="px-6 py-4 text-center">Zonificación (R / E / N)</th>
+                        <th class="px-6 py-4">Zonificación (Rack/Espacio/Nivel)</th>
                         <th class="px-6 py-4 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-sm">
                     {% for producto in page_obj %}
-                    <tr class="hover:bg-slate-50/80 animacion-suave">
-                        <td class="px-6 py-4 font-mono font-bold text-slate-700 tracking-wide">{{ producto.codigo_barras }}</td>
-                        <td class="px-6 py-4 text-slate-600 font-medium">{{ producto.descripcion }}</td>
-                        <td class="px-6 py-4 text-center font-bold text-blue-800">{{ producto.stock_teorico }}</td>
+                    <tr class="hover:bg-slate-50 transition-colors">
                         
-                        <!-- NUEVA CELDA DE ZONIFICACIÓN MÚLTIPLE -->
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col items-center gap-1">
-
+                        <!-- CÓDIGO -->
+                        <td class="px-6 py-4 font-mono font-bold text-slate-600 tracking-wide whitespace-nowrap">
+                            <span class="bg-slate-100 px-2 py-1 rounded border border-slate-200">{{ producto.codigo_barras }}</span>
+                        </td>
+                        
+                        <!-- DESCRIPCIÓN -->
+                        <td class="px-6 py-4 text-slate-800 font-bold min-w-[200px]">
+                            {{ producto.descripcion }}
+                        </td>
+                        
+                        <!-- STOCK -->
+                        <td class="px-6 py-4 text-center whitespace-nowrap">
+                            <span class="font-black text-lg text-[#2563EB]">{{ producto.stock_teorico }}</span>
+                            <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Unidades</span>
+                        </td>
+                        
+                        <!-- ZONIFICACIÓN MÚLTIPLE -->
+                        <td class="px-6 py-4 min-w-[250px]">
+                            <div class="flex flex-wrap items-center gap-2">
                                 {% for stock in producto.stocks_por_ubicacion.all %}
-
                                     {% if stock.cantidad > 0 %}
-
-                                        <div class="inline-flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 border border-slate-200">
-
+                                        <div class="inline-flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 shadow-sm">
+                                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-slate-400"></i>
                                             <span>
-                                                {{ stock.ubicacion.rack }}
-                                                /
-                                                {{ stock.ubicacion.espacio }}
-                                                /
-                                                {{ stock.ubicacion.nivel }}
+                                                {{ stock.ubicacion.rack }} / {{ stock.ubicacion.espacio }} / {{ stock.ubicacion.nivel }}
                                             </span>
-
-                                            <span class="text-blue-700">
+                                            <span class="bg-blue-50 text-[#2563EB] px-1.5 rounded">
                                                 {{ stock.cantidad }} und.
                                             </span>
-
                                         </div>
-
                                     {% endif %}
-
                                 {% empty %}
-
-                                    <span class="inline-flex items-center bg-slate-100 px-3 py-1 rounded-lg text-xs font-bold text-slate-500 border border-slate-200">
-                                        Sin ubicación
+                                    <span class="inline-flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-400 uppercase tracking-wider border border-slate-200">
+                                        <i data-lucide="map-pin-off" class="w-3.5 h-3.5"></i> Sin ubicación
                                     </span>
-
                                 {% endfor %}
-
                             </div>
                         </td>
 
+                        <!-- ACCIONES -->
                         <td class="px-6 py-4 text-center">
                             <a href="{% url 'inventario:editar_producto' producto.id %}"
-                               class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 rounded-lg shadow-sm transition-colors text-xs">
-                                ✏️ Editar
+                               class="inline-flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold px-3 py-1.5 rounded-lg shadow-sm transition-colors text-xs">
+                                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i> Editar
                             </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-slate-400 italic">
-                            No se encontraron coincidencias.
+                        <td colspan="5" class="px-6 py-16 text-center bg-slate-50/50">
+                            <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-300 border border-slate-200">
+                                <i data-lucide="search-x" class="w-8 h-8"></i>
+                            </div>
+                            <strong class="block text-slate-800 text-sm mb-1">No se encontraron coincidencias</strong>
+                            <p class="text-xs text-slate-500">Prueba buscando con otro término.</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -301,12 +255,12 @@
         </div>
     </div>
 
-    <!-- CONTROLES DE PAGINACIÓN -->
-    <div class="flex items-center justify-between border-t border-slate-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-xl shadow-sm">
+    <!-- ================= CONTROLES DE PAGINACIÓN ================= -->
+    <div class="flex items-center justify-between border border-slate-200 bg-white px-4 py-3 sm:px-6 mt-4 rounded-xl shadow-sm">
         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div>
-                <p class="text-sm text-slate-700">
-                    Página <span class="font-medium">{{ page_obj.number }}</span> de <span class="font-medium">{{ page_obj.paginator.num_pages }}</span>
+                <p class="text-xs text-slate-500">
+                    Página <span class="font-bold text-slate-800">{{ page_obj.number }}</span> de <span class="font-bold text-slate-800">{{ page_obj.paginator.num_pages }}</span>
                 </p>
             </div>
             <div>
@@ -314,28 +268,26 @@
                     
                     {% if page_obj.has_previous %}
                         <a href="?page=1{% if query %}&q={{ query }}{% endif %}"
-                           class="relative inline-flex items-center rounded-l-md px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                           class="relative inline-flex items-center rounded-l-md px-3 py-2 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
                             &laquo; Primera
                         </a>
-
                         <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}"
-                           class="relative inline-flex items-center px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                           class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
                             Anterior
                         </a>
                     {% endif %}
 
-                    <span class="relative inline-flex items-center px-4 py-2 text-sm font-bold text-white bg-blue-600 ring-1 ring-inset ring-blue-600">
+                    <span class="relative inline-flex items-center px-4 py-2 text-xs font-black text-white bg-[#2563EB] ring-1 ring-inset ring-[#2563EB]">
                         {{ page_obj.number }}
                     </span>
 
                     {% if page_obj.has_next %}
                         <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}"
-                           class="relative inline-flex items-center px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                           class="relative inline-flex items-center px-3 py-2 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
                             Siguiente
                         </a>
-
                         <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}"
-                           class="relative inline-flex items-center rounded-r-md px-3 py-2 text-sm font-semibold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50">
+                           class="relative inline-flex items-center rounded-r-md px-3 py-2 text-xs font-bold text-slate-500 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
                             Última &raquo;
                         </a>
                     {% endif %}

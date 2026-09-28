@@ -3,222 +3,166 @@
 {% block title %}Registrar Salida | Boccherini{% endblock %}
 
 {% block content %}
+<div class="max-w-4xl mx-auto py-6">
 
-<div class="max-w-4xl mx-auto">
-
-    <!-- ENCABEZADO -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">
-                    Registrar salida
-                </h2>
-
-                <p class="text-sm text-slate-500 mt-1">
-                    Registra la salida de productos y actualiza automáticamente el stock.
-                </p>
-            </div>
-
-            <a href="{% url 'inventario:lista_productos' %}"
-               class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200
-                      text-slate-700 font-bold px-4 py-2.5 rounded-xl
-                      border border-slate-200 shadow-sm transition-colors text-sm">
-                ← Volver
-            </a>
-        </div>
-    </div>
-
-
-    <!-- MENSAJES -->
-    {% if messages %}
-        <div class="mb-6 space-y-2">
-            {% for message in messages %}
-                <div class="px-4 py-3 rounded-xl text-sm font-semibold
-                    {% if message.tags == 'error' %}
-                        bg-red-50 text-red-700 border border-red-200
-                    {% else %}
-                        bg-emerald-50 text-emerald-700 border border-emerald-200
-                    {% endif %}
-                ">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-
-
-    <!-- FORMULARIO -->
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-
-        <div class="px-6 py-5 bg-slate-50 border-b border-slate-200">
-            <h3 class="text-base font-extrabold text-slate-800">
-                Información de la salida
-            </h3>
-
-            <p class="text-xs text-slate-500 mt-1">
-                Los movimientos registrados quedarán asociados al usuario y fecha.
+    <!-- ================= ENCABEZADO ================= -->
+    <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="arrow-up-from-line" class="w-7 h-7 text-rose-600"></i>
+                Registrar Salida
+            </h2>
+            <p class="text-sm text-slate-500 mt-1">
+                Registra la salida de productos y actualiza automáticamente el stock.
             </p>
         </div>
+        <a href="{% url 'inventario:lista_productos' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition font-bold text-xs shadow-sm border border-slate-200 cursor-pointer">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Cancelar / Volver
+        </a>
+    </div>
 
+    <!-- ================= MENSAJES ================= -->
+    {% if messages %}
+    <div class="space-y-3 mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-xl text-xs font-bold shadow-sm flex items-center gap-2 
+            {% if message.tags == 'error' %} bg-rose-50 text-rose-800 border border-rose-200 {% else %} bg-[#E6F7F0] text-emerald-800 border border-[#A3E6CD] {% endif %}">
+            {% if message.tags == 'error' %}
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
+            {% else %}
+                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+            {% endif %}
+            <span>{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
 
-        <form method="POST" class="p-6">
+    <!-- ================= FORMULARIO ================= -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
 
-            {% csrf_token %}
+        <div class="bg-[#0A192F] px-6 py-4 border-b border-slate-700">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="package-minus" class="w-4 h-4 text-slate-300"></i> Información de la salida
+            </h3>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="p-6 sm:p-8">
+            <form method="POST" class="m-0 space-y-6">
+                {% csrf_token %}
 
-                <!-- PRODUCTO -->
-                <div class="md:col-span-2">
-                    <label for="producto" class="block text-sm font-bold text-slate-700 mb-2">
-                        Producto
-                    </label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                    <select name="producto" id="producto" required
-                            class="w-full px-4 py-3 bg-white border border-slate-300
-                                   rounded-xl focus:outline-none focus:ring-2
-                                   focus:ring-red-500 focus:border-red-500
-                                   text-sm text-slate-700">
-                        <option value="">Seleccione un producto...</option>
-
-                        {% for producto in productos %}
-                            <option value="{{ producto.id }}" data-stock="{{ producto.stock_teorico }}">
-                                {{ producto.codigo_barras }} |
-                                {{ producto.descripcion }} |
-                                Stock Global: {{ producto.stock_teorico }}
-                            </option>
-                        {% endfor %}
-                    </select>
-
-                    <p id="stock-disponible" class="text-xs text-slate-500 mt-2">
-                        Seleccione un producto y una ubicación para consultar el stock disponible.
-                    </p>
-                </div>
-
-
-                <!-- CANTIDAD -->
-                <div>
-                    <label for="cantidad" class="block text-sm font-bold text-slate-700 mb-2">
-                        Cantidad
-                    </label>
-
-                    <input type="number" name="cantidad" id="cantidad" min="1" required placeholder="Ej: 10"
-                           class="w-full px-4 py-3 bg-white border border-slate-300
-                                  rounded-xl focus:outline-none focus:ring-2
-                                  focus:ring-red-500 focus:border-red-500
-                                  text-sm text-slate-700">
-                </div>
-
-
-                <!-- UBICACIÓN -->
-                <div>
-                    <label for="ubicacion" class="block text-sm font-bold text-slate-700 mb-2">
-                        Ubicación
-                    </label>
-
-                    <select name="ubicacion" id="ubicacion" required
-                            class="w-full px-4 py-3 bg-white border border-slate-300
-                                   rounded-xl focus:outline-none focus:ring-2
-                                   focus:ring-red-500 focus:border-red-500
-                                   text-sm text-slate-700">
-                        <option value="">Seleccione una ubicación...</option>
-
-                        {% for ubicacion in ubicaciones %}
-                            <option value="{{ ubicacion.id }}" data-ubicacion="{{ ubicacion.id }}">
-                                {{ ubicacion.rack }} /
-                                {{ ubicacion.espacio }} /
-                                {{ ubicacion.nivel }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-
-                <!-- MOTIVO -->
-                <div>
-                    <label for="motivo" class="block text-sm font-bold text-slate-700 mb-2">
-                        Motivo
-                    </label>
-
-                    <select name="motivo" id="motivo"
-                            class="w-full px-4 py-3 bg-white border border-slate-300
-                                   rounded-xl focus:outline-none focus:ring-2
-                                   focus:ring-red-500 focus:border-red-500
-                                   text-sm text-slate-700">
-                        <option value="">Seleccione un motivo...</option>
-                        <option value="Venta">Venta</option>
-                        <option value="Consumo interno">Consumo interno</option>
-                        <option value="Devolución">Devolución</option>
-                        <option value="Traslado">Traslado</option>
-                        <option value="Ajuste">Ajuste</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
-
-
-                <!-- OBSERVACIÓN -->
-                <div class="md:col-span-2">
-                    <label for="observacion" class="block text-sm font-bold text-slate-700 mb-2">
-                        Observación
-                    </label>
-
-                    <textarea name="observacion" id="observacion" rows="3" placeholder="Observaciones adicionales..."
-                              class="w-full px-4 py-3 bg-white border border-slate-300
-                                     rounded-xl focus:outline-none focus:ring-2
-                                     focus:ring-red-500 focus:border-red-500
-                                     text-sm text-slate-700 resize-none"></textarea>
-                </div>
-
-            </div>
-
-
-            <!-- AVISO -->
-            <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div class="flex gap-3">
-                    <span class="text-red-600 font-bold">!</span>
-
-                    <div>
-                        <p class="text-sm font-bold text-red-800">
-                            Importante
+                    <!-- PRODUCTO -->
+                    <div class="md:col-span-2">
+                        <label for="producto" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            Producto <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select name="producto" id="producto" required
+                                    class="w-full pl-4 pr-10 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all appearance-none">
+                                <option value="">Seleccione un producto...</option>
+                                {% for producto in productos %}
+                                    <option value="{{ producto.id }}" data-stock="{{ producto.stock_teorico }}">
+                                        {{ producto.codigo_barras }} | {{ producto.descripcion }} | Stock Global: {{ producto.stock_teorico }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        </div>
+                        <p id="stock-disponible" class="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5 font-medium">
+                            <i data-lucide="info" class="w-3.5 h-3.5"></i> Seleccione un producto y una ubicación para consultar el stock disponible.
                         </p>
+                    </div>
 
-                        <p class="text-xs text-red-700 mt-1">
-                            La cantidad indicada se descontará inmediatamente
-                            del stock teórico del producto.
+                    <!-- CANTIDAD -->
+                    <div>
+                        <label for="cantidad" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            Cantidad a Retirar <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                <i data-lucide="minus" class="w-4 h-4 text-rose-500"></i>
+                            </span>
+                            <input type="number" name="cantidad" id="cantidad" min="1" required placeholder="Ej: 10"
+                                   class="w-full pl-10 pr-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all">
+                        </div>
+                    </div>
+
+                    <!-- UBICACIÓN -->
+                    <div>
+                        <label for="ubicacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            Ubicación Origen <span class="text-rose-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <select name="ubicacion" id="ubicacion" required
+                                    class="w-full pl-4 pr-10 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all appearance-none">
+                                <option value="">Seleccione una ubicación...</option>
+                                {% for ubicacion in ubicaciones %}
+                                    <option value="{{ ubicacion.id }}" data-ubicacion="{{ ubicacion.id }}">
+                                        {{ ubicacion.rack }} / {{ ubicacion.espacio }} / {{ ubicacion.nivel }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- MOTIVO -->
+                    <div>
+                        <label for="motivo" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            Motivo
+                        </label>
+                        <div class="relative">
+                            <select name="motivo" id="motivo"
+                                    class="w-full pl-4 pr-10 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all appearance-none">
+                                <option value="">Seleccione un motivo...</option>
+                                <option value="Venta">Venta</option>
+                                <option value="Consumo interno">Consumo interno</option>
+                                <option value="Devolución">Devolución a proveedor</option>
+                                <option value="Traslado">Traslado Saliente</option>
+                                <option value="Ajuste">Ajuste Negativo (Pérdida/Daño)</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <!-- OBSERVACIÓN -->
+                    <div class="md:col-span-2">
+                        <label for="observacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                            Observación / Detalle
+                        </label>
+                        <textarea name="observacion" id="observacion" rows="3" placeholder="Observaciones adicionales, facturas, destinatario..."
+                                  class="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all resize-none"></textarea>
+                    </div>
+
+                </div>
+
+                <!-- AVISO DE IMPACTO -->
+                <div class="mt-6 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 shadow-sm">
+                    <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="text-xs font-bold text-rose-800 uppercase tracking-wider">Importante</p>
+                        <p class="text-[11px] text-rose-700/80 mt-0.5 leading-relaxed font-medium">
+                            La cantidad indicada se descontará inmediatamente del stock teórico del producto y de la ubicación seleccionada. Esta acción quedará registrada en el Kardex.
                         </p>
                     </div>
                 </div>
-            </div>
 
+                <!-- BOTONERA -->
+                <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm shadow-sm transition-colors border-0 cursor-pointer">
+                        Registrar Salida <i data-lucide="arrow-up-from-line" class="w-4 h-4"></i>
+                    </button>
+                </div>
 
-            <!-- BOTONES -->
-            <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-
-                <a href="{% url 'inventario:lista_productos' %}"
-                   class="inline-flex justify-center items-center
-                          bg-slate-100 hover:bg-slate-200
-                          text-slate-700 font-bold px-5 py-3 rounded-xl
-                          border border-slate-200 transition-colors text-sm">
-                    Cancelar
-                </a>
-
-                <button type="submit"
-                        class="inline-flex justify-center items-center gap-2
-                               bg-red-600 hover:bg-red-700
-                               text-white font-bold px-6 py-3 rounded-xl
-                               shadow-md hover:shadow-lg
-                               transition-all duration-200 text-sm">
-                    − Registrar salida
-                </button>
-
-            </div>
-
-        </form>
-
+            </form>
+        </div>
     </div>
-
 </div>
 
-<!-- DATOS OCULTOS PARA EL JAVASCRIPT -->
+<!-- ================= DATOS OCULTOS PARA EL JAVASCRIPT ================= -->
 <div class="hidden" id="datos-stock">
     {% for stock in stock_ubicaciones %}
         <span data-stock-producto="{{ stock.producto.id }}"
@@ -228,8 +172,7 @@
     {% endfor %}
 </div>
 
-
-<!-- VALIDACIÓN VISUAL DE STOCK POR UBICACIÓN -->
+<!-- ================= JAVASCRIPT INTACTO ================= -->
 <script>
     const productoSelect = document.getElementById('producto');
     const ubicacionSelect = document.getElementById('ubicacion');
@@ -243,12 +186,10 @@
         cantidadInput.removeAttribute('max');
 
         if (!productoId || !ubicacionId) {
-            stockDisponible.textContent =
-                'Seleccione un producto y una ubicación para consultar el stock.';
-
-            stockDisponible.className =
-                'text-xs text-slate-500 mt-2';
-
+            stockDisponible.innerHTML = '<i data-lucide="info" class="w-3.5 h-3.5 inline"></i> Seleccione un producto y una ubicación para consultar el stock disponible.';
+            stockDisponible.className = 'text-[11px] text-slate-400 mt-2 flex items-center gap-1.5 font-medium';
+            // Re-renderizamos los íconos si se cambió el HTML
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             return;
         }
 
@@ -260,11 +201,9 @@
             ? parseInt(stockElement.dataset.cantidad || '0', 10)
             : 0;
 
-        stockDisponible.textContent =
-            `Stock disponible en esta ubicación: ${stock} unidades`;
-
-        stockDisponible.className =
-            'text-xs font-bold text-blue-700 mt-2';
+        stockDisponible.innerHTML = `<i data-lucide="check-circle" class="w-3.5 h-3.5 inline"></i> Stock disponible en esta ubicación: ${stock} unidades`;
+        stockDisponible.className = 'text-[11px] font-bold text-[#2563EB] mt-2 flex items-center gap-1.5';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
 
         cantidadInput.max = stock;
     }
@@ -272,5 +211,4 @@
     productoSelect.addEventListener('change', actualizarStock);
     ubicacionSelect.addEventListener('change', actualizarStock);
 </script>
-
 {% endblock %}

@@ -4,471 +4,80 @@
 
 {% block content %}
 
-<style>
-    .conciliacion-container {
-        max-width: 1500px;
-        margin: 0 auto;
-        padding: 30px 20px 50px;
-    }
-
-    /* HEADER */
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 25px;
-    }
-
-    .page-title {
-        margin: 0;
-        font-size: 28px;
-        font-weight: 700;
-        color: #102a43;
-    }
-
-    .page-subtitle {
-        margin-top: 6px;
-        color: #627d98;
-        font-size: 15px;
-    }
-
-    .base-name {
-        color: #102a43;
-        font-weight: 700;
-    }
-
-    .btn-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 10px 16px;
-        border-radius: 9px;
-        background: #f1f5f9;
-        color: #334e68;
-        text-decoration: none;
-        font-weight: 600;
-        border: 1px solid #d9e2ec;
-        transition: .2s;
-    }
-
-    .btn-back:hover {
-        background: #e2e8f0;
-        color: #102a43;
-    }
-
-    /* RESUMEN */
-    .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-bottom: 25px;
-    }
-
-    .summary-card {
-        background: white;
-        border: 1px solid #e1e8ed;
-        border-radius: 12px;
-        padding: 18px 20px;
-        box-shadow: 0 2px 8px rgba(16, 42, 67, .05);
-    }
-
-    .summary-label {
-        font-size: 13px;
-        color: #627d98;
-        margin-bottom: 6px;
-    }
-
-    .summary-value {
-        font-size: 25px;
-        font-weight: 700;
-        color: #102a43;
-    }
-
-    /* SECCIONES */
-    .section-card {
-        background: white;
-        border: 1px solid #e1e8ed;
-        border-radius: 14px;
-        box-shadow: 0 3px 12px rgba(16, 42, 67, .06);
-        margin-bottom: 25px;
-        overflow: hidden;
-    }
-
-    .section-header {
-        padding: 18px 22px;
-        border-bottom: 1px solid #e6edf2;
-        background: #f8fafc;
-    }
-
-    .section-header h3 {
-        margin: 0;
-        color: #102a43;
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .section-header p {
-        margin: 4px 0 0;
-        color: #829ab1;
-        font-size: 13px;
-    }
-
-    .section-body {
-        padding: 20px;
-    }
-
-    /* SESIONES */
-    .sessions-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 15px;
-    }
-
-    .session-card {
-        border: 1px solid #d9e2ec;
-        border-radius: 11px;
-        padding: 16px;
-        background: #ffffff;
-    }
-
-    .session-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 13px;
-    }
-
-    .session-number {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        background: #e6f0f7;
-        color: #102a43;
-        font-weight: 700;
-        flex-shrink: 0;
-    }
-
-    .session-name {
-        font-weight: 700;
-        color: #243b53;
-        font-size: 14px;
-        line-height: 1.4;
-        flex: 1;
-    }
-
-    .session-data {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        border-top: 1px solid #edf2f7;
-        padding-top: 12px;
-    }
-
-    .session-data-item span {
-        display: block;
-        font-size: 11px;
-        color: #829ab1;
-        text-transform: uppercase;
-        margin-bottom: 3px;
-    }
-
-    .session-data-item strong {
-        color: #334e68;
-        font-size: 13px;
-    }
-
-    /* TABLA */
-    .table-wrapper {
-        overflow-x: auto;
-        border: 1px solid #e1e8ed;
-        border-radius: 10px;
-    }
-
-    .conciliation-table {
-        width: 100%;
-        min-width: 1050px;
-        border-collapse: collapse;
-        background: white;
-    }
-
-    .conciliation-table th {
-        background: #102a43;
-        color: white;
-        padding: 13px 12px;
-        text-align: left;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: .3px;
-        white-space: nowrap;
-    }
-
-    .conciliation-table td {
-        padding: 14px 12px;
-        border-bottom: 1px solid #edf2f7;
-        color: #334e68;
-        font-size: 14px;
-        vertical-align: middle;
-    }
-
-    .conciliation-table tbody tr:hover {
-        background: #f8fafc;
-    }
-
-    .conciliation-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .text-center {
-        text-align: center !important;
-    }
-
-    .codigo {
-        font-weight: 700;
-        color: #102a43;
-        white-space: nowrap;
-    }
-
-    .producto {
-        font-weight: 600;
-        color: #243b53;
-        min-width: 180px;
-    }
-
-    .stock {
-        font-size: 16px;
-        font-weight: 700;
-        text-align: center;
-    }
-
-    .conteo {
-        text-align: center;
-        font-size: 16px;
-        font-weight: 700;
-    }
-
-    .conteo small {
-        display: block;
-        margin-top: 4px;
-        font-size: 11px;
-        font-weight: 500;
-    }
-
-    /* BADGES */
-    .badge {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 5px 9px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 700;
-        white-space: nowrap;
-    }
-
-    .badge-success {
-        background: #def7ec;
-        color: #046c4e;
-    }
-
-    .badge-warning {
-        background: #fdf6b2;
-        color: #92400e;
-    }
-
-    .badge-danger {
-        background: #fde8e8;
-        color: #c81e1e;
-    }
-
-    .badge-neutral {
-        background: #edf2f7;
-        color: #627d98;
-    }
-
-    .badge-blue {
-        background: #e1effe;
-        color: #1e429f;
-    }
-
-    .status-cell {
-        text-align: center;
-        min-width: 130px;
-    }
-
-    .pending {
-        color: #829ab1;
-        font-size: 13px;
-        font-style: italic;
-    }
-
-    .empty-state {
-        padding: 40px 20px;
-        text-align: center;
-        color: #829ab1;
-    }
-
-    .empty-state strong {
-        display: block;
-        color: #486581;
-        font-size: 16px;
-        margin-bottom: 5px;
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 900px) {
-        .page-header {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-
-        .summary-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .conciliacion-container {
-            padding: 20px 12px 40px;
-        }
-
-        .page-title {
-            font-size: 23px;
-        }
-    }
-
-    @media (max-width: 600px) {
-        .sessions-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .section-body {
-            padding: 12px;
-        }
-
-        .section-header {
-            padding: 15px;
-        }
-    }
-</style>
-
-
-<div class="conciliacion-container">
+<div class="max-w-[1500px] w-full mx-auto space-y-6 pb-12">
 
     <!-- ================= HEADER ================= -->
-
-    <div class="page-header">
-
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
         <div>
-            <h1 class="page-title">
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="clipboard-check" class="w-7 h-7 text-[#0055A5]"></i>
                 Conciliación de Inventario
             </h1>
-
-            <div class="page-subtitle">
-                Base:
-                <span class="base-name">
-                    {{ base }}
-                </span>
+            <div class="text-sm text-slate-500 mt-1">
+                Base: <span class="font-bold text-slate-800">{{ base }}</span>
             </div>
         </div>
 
-        <a href="{% url 'inventario:panel_sesiones' %}"
-           class="btn-back">
-            ← Volver a sesiones
+        <a href="{% url 'inventario:panel_sesiones' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg flex items-center gap-2 transition font-bold text-xs shadow-sm border border-slate-200">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver a sesiones
         </a>
-
     </div>
-
 
     <!-- ================= RESUMEN ================= -->
-
-    <div class="summary-grid">
-
-        <div class="summary-card">
-            <div class="summary-label">
-                Sesiones
-            </div>
-
-            <div class="summary-value">
-                {{ sesiones|length }}
-            </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-center">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Sesiones</div>
+            <div class="text-3xl font-black text-slate-800">{{ sesiones|length }}</div>
+            <i data-lucide="layers" class="absolute -right-4 -bottom-4 w-20 h-20 text-slate-100"></i>
         </div>
 
-
-        <div class="summary-card">
-            <div class="summary-label">
-                Productos evaluados
-            </div>
-
-            <div class="summary-value">
-                {{ resultados|length }}
-            </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-center">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Productos evaluados</div>
+            <div class="text-3xl font-black text-slate-800">{{ resultados|length }}</div>
+            <i data-lucide="package-search" class="absolute -right-4 -bottom-4 w-20 h-20 text-slate-100"></i>
         </div>
 
-
-        <div class="summary-card">
-            <div class="summary-label">
-                Tipo de proceso
-            </div>
-
-            <div class="summary-value"
-                 style="font-size:18px;">
-                Conciliación
-            </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-center">
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Tipo de proceso</div>
+            <div class="text-xl font-black text-[#2563EB]">Conciliación</div>
+            <i data-lucide="git-merge" class="absolute -right-4 -bottom-4 w-20 h-20 text-blue-50"></i>
         </div>
 
     </div>
 
-
     <!-- ================= SESIONES ================= -->
-
-    <div class="section-card">
-
-        <div class="section-header">
-            <h3>
-                Sesiones utilizadas
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        
+        <div class="bg-[#0A192F] px-6 py-4 border-b border-slate-700">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="clock" class="w-4 h-4 text-slate-300"></i> Sesiones utilizadas
             </h3>
-
-            <p>
-                Cada sesión representa un conteo independiente realizado sobre esta base.
-            </p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Cada sesión representa un conteo independiente realizado sobre esta base.</p>
         </div>
 
-
-        <div class="section-body">
-
+        <div class="p-6 bg-slate-50/50">
             {% if sesiones %}
-
-                <div class="sessions-grid">
-
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {% for sesion in sesiones %}
-
-                    <div class="session-card">
-
-                        <div class="session-top">
-
-                            <div class="session-number">
+                    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:border-[#2563EB]/40 transition-colors">
+                        
+                        <div class="flex justify-between items-start mb-3 gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 text-[#2563EB] font-black text-sm flex items-center justify-center shrink-0">
                                 {{ forloop.counter }}
                             </div>
-
-                            <div class="session-name">
+                            <div class="flex-1 font-bold text-slate-800 text-sm leading-tight">
                                 {{ sesion.nombre }}
                             </div>
-
-                            <span class="badge badge-blue">
+                            <span class="bg-blue-100 text-blue-800 text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-wider shrink-0 whitespace-nowrap">
                                 {{ sesion.get_estado_display|default:sesion.estado }}
                             </span>
-
                         </div>
 
-
-                        <div class="session-data">
-
-                            <div class="session-data-item">
-                                <span>Usuario</span>
-
-                                <strong>
+                        <div class="grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                            <div>
+                                <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Usuario</span>
+                                <strong class="text-xs text-slate-700 truncate block">
                                     {% if sesion.usuario %}
                                         {{ sesion.usuario }}
                                     {% else %}
@@ -476,290 +85,177 @@
                                     {% endif %}
                                 </strong>
                             </div>
-
-
-                            <div class="session-data-item">
-                                <span>Inicio</span>
-
-                                <strong>
+                            <div>
+                                <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Inicio</span>
+                                <strong class="text-xs text-slate-700 whitespace-nowrap">
                                     {{ sesion.fecha_inicio|date:"d/m/Y H:i" }}
                                 </strong>
                             </div>
-
                         </div>
 
                     </div>
-
                     {% endfor %}
-
                 </div>
-
             {% else %}
-
-                <div class="empty-state">
-                    <strong>No hay sesiones</strong>
-                    No existen sesiones asociadas a esta base.
+                <div class="py-10 text-center">
+                    <div class="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-300 border border-slate-200">
+                        <i data-lucide="inbox" class="w-6 h-6"></i>
+                    </div>
+                    <strong class="block text-slate-800 text-sm mb-1">No hay sesiones</strong>
+                    <span class="text-xs text-slate-500">No existen sesiones asociadas a esta base.</span>
                 </div>
-
             {% endif %}
-
         </div>
-
     </div>
 
 
     <!-- ================= RESULTADOS ================= -->
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
 
-    <div class="section-card">
-
-        <div class="section-header">
-
-            <h3>
-                Resultados de conciliación
+        <div class="bg-[#0A192F] px-6 py-4 border-b border-slate-700">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-slate-300"></i> Resultados de conciliación
             </h3>
-
-            <p>
-                Comparación entre los conteos realizados y el stock registrado en el sistema.
-            </p>
-
+            <p class="text-[11px] text-slate-400 mt-0.5">Comparación entre los conteos realizados y el stock registrado en el sistema.</p>
         </div>
 
-
-        <div class="section-body">
-
+        <div class="p-0">
             {% if resultados %}
-
-                <div class="table-wrapper">
-
-                    <table class="conciliation-table">
-
-                        <thead>
-
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-700 whitespace-nowrap min-w-[1050px]">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                             <tr>
-
-                                <th>Código</th>
-
-                                <th>Producto</th>
-
-                                <th class="text-center">
-                                    Stock sistema
-                                </th>
-
+                                <th class="px-5 py-4">Código</th>
+                                <th class="px-5 py-4">Producto</th>
+                                <th class="px-5 py-4 text-center">Stock sistema</th>
+                                
                                 {% for sesion in sesiones %}
-
-                                    <th class="text-center">
+                                    <th class="px-5 py-4 text-center bg-slate-100/50">
                                         Conteo sesión {{ forloop.counter }}
                                     </th>
-
                                 {% endfor %}
-
-                                <th class="text-center">
-                                    Consensuado
-                                </th>
-
-                                <th class="text-center">
-                                    Diferencia sistema
-                                </th>
-
-                                <th class="text-center">
-                                    Estado
-                                </th>
-
+                                
+                                <th class="px-5 py-4 text-center bg-blue-50/50">Consensuado</th>
+                                <th class="px-5 py-4 text-center">Diferencia sistema</th>
+                                <th class="px-5 py-4 text-center">Estado</th>
                             </tr>
-
                         </thead>
 
-
-                        <tbody>
-
+                        <tbody class="divide-y divide-slate-100">
                             {% for resultado in resultados %}
-
-                            <tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
 
                                 <!-- CÓDIGO -->
-
-                                <td class="codigo">
+                                <td class="px-5 py-4 font-bold text-slate-900">
                                     {{ resultado.producto.codigo_barras }}
                                 </td>
 
-
                                 <!-- PRODUCTO -->
-
-                                <td class="producto">
+                                <td class="px-5 py-4 font-semibold text-slate-700 min-w-[180px] whitespace-normal">
                                     {{ resultado.producto.descripcion }}
                                 </td>
 
-
                                 <!-- STOCK SISTEMA -->
-
-                                <td class="stock">
+                                <td class="px-5 py-4 text-center font-black text-lg text-slate-800">
                                     {{ resultado.stock_sistema }}
                                 </td>
 
-
                                 <!-- CONTEOS -->
-
                                 {% for sesion in resultado.sesiones %}
-
-                                <td class="conteo">
-
+                                <td class="px-5 py-4 text-center bg-slate-50/30">
                                     {% if sesion.cantidad is not None %}
-
-                                        {{ sesion.cantidad }}
-
+                                        <div class="font-black text-lg text-slate-800">{{ sesion.cantidad }}</div>
+                                        
                                         {% if sesion.diferencia is not None %}
-
-                                            {% if sesion.diferencia == 0 %}
-
-                                                <small>
-                                                    <span class="badge badge-success">
+                                            <div class="mt-1">
+                                                {% if sesion.diferencia == 0 %}
+                                                    <span class="bg-[#def7ec] text-[#046c4e] text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center">
                                                         ✓ Coincide
                                                     </span>
-                                                </small>
-
-                                            {% elif sesion.diferencia > 0 %}
-
-                                                <small>
-                                                    <span class="badge badge-warning">
+                                                {% elif sesion.diferencia > 0 %}
+                                                    <span class="bg-[#fdf6b2] text-[#92400e] text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center">
                                                         +{{ sesion.diferencia }}
                                                     </span>
-                                                </small>
-
-                                            {% else %}
-
-                                                <small>
-                                                    <span class="badge badge-danger">
+                                                {% else %}
+                                                    <span class="bg-[#fde8e8] text-[#c81e1e] text-[9px] font-bold px-2 py-0.5 rounded-full inline-flex items-center">
                                                         {{ sesion.diferencia }}
                                                     </span>
-                                                </small>
-
-                                            {% endif %}
-
+                                                {% endif %}
+                                            </div>
                                         {% endif %}
-
                                     {% else %}
-
-                                        <span class="pending">
-                                            Sin conteo
-                                        </span>
-
+                                        <span class="text-slate-400 italic text-xs">Sin conteo</span>
                                     {% endif %}
-
                                 </td>
-
                                 {% endfor %}
 
-
                                 <!-- CONSENSUADO -->
-
-                                <td class="text-center">
-
+                                <td class="px-5 py-4 text-center bg-blue-50/30">
                                     {% if resultado.conteo_consensuado is not None %}
-
-                                        <span class="badge badge-blue"
-                                              style="font-size:13px;">
+                                        <span class="bg-blue-100 text-blue-800 text-sm font-black px-3 py-1 rounded-lg inline-block">
                                             {{ resultado.conteo_consensuado }}
                                         </span>
-
                                     {% else %}
-
-                                        <span class="pending">
-                                            Pendiente
-                                        </span>
-
+                                        <span class="text-slate-400 italic text-xs">Pendiente</span>
                                     {% endif %}
-
                                 </td>
-
 
                                 <!-- DIFERENCIA SISTEMA -->
-
-                                <td class="text-center">
-
+                                <td class="px-5 py-4 text-center">
                                     {% if resultado.diferencia_sistema is not None %}
-
                                         {% if resultado.diferencia_sistema == 0 %}
-
-                                            <span class="badge badge-success">
+                                            <span class="bg-[#def7ec] text-[#046c4e] text-[11px] font-bold px-2.5 py-1 rounded-full">
                                                 0
                                             </span>
-
                                         {% elif resultado.diferencia_sistema > 0 %}
-
-                                            <span class="badge badge-warning">
+                                            <span class="bg-[#fdf6b2] text-[#92400e] text-[11px] font-bold px-2.5 py-1 rounded-full">
                                                 +{{ resultado.diferencia_sistema }}
                                             </span>
-
                                         {% else %}
-
-                                            <span class="badge badge-danger">
+                                            <span class="bg-[#fde8e8] text-[#c81e1e] text-[11px] font-bold px-2.5 py-1 rounded-full">
                                                 {{ resultado.diferencia_sistema }}
                                             </span>
-
                                         {% endif %}
-
                                     {% else %}
-
-                                        <span class="pending">
-                                            Pendiente
-                                        </span>
-
+                                        <span class="text-slate-400 italic text-xs">Pendiente</span>
                                     {% endif %}
-
                                 </td>
 
-
                                 <!-- ESTADO -->
-
-                                <td class="status-cell">
-
+                                <td class="px-5 py-4 text-center">
                                     {% if resultado.estado == "OK" %}
-
-                                        <span class="badge badge-success">
+                                        <span class="bg-[#def7ec] text-[#046c4e] text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
                                             ✓ OK
                                         </span>
-
                                     {% elif resultado.estado == "DIFERENCIA" %}
-
-                                        <span class="badge badge-danger">
+                                        <span class="bg-[#fde8e8] text-[#c81e1e] text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
                                             ⚠ Diferencia
                                         </span>
-
                                     {% elif resultado.estado == "UN_SOLO_CONTEO" %}
-
-                                        <span class="badge badge-warning">
+                                        <span class="bg-[#fdf6b2] text-[#92400e] text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
                                             Un solo conteo
                                         </span>
-
                                     {% else %}
-
-                                        <span class="badge badge-neutral">
+                                        <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap">
                                             {{ resultado.estado }}
                                         </span>
-
                                     {% endif %}
-
                                 </td>
 
                             </tr>
-
                             {% endfor %}
-
                         </tbody>
-
                     </table>
-
                 </div>
-
             {% else %}
-
-                <div class="empty-state">
-                    <strong>No hay resultados</strong>
-                    No existen productos para conciliar en esta base.
+                <div class="py-12 text-center bg-slate-50/50">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-300 border border-slate-200">
+                        <i data-lucide="layout-grid" class="w-8 h-8"></i>
+                    </div>
+                    <strong class="block text-slate-800 text-base mb-1">No hay resultados</strong>
+                    <span class="text-sm text-slate-500">No existen productos para conciliar en esta base.</span>
                 </div>
-
             {% endif %}
-
         </div>
 
     </div>

@@ -1,139 +1,200 @@
 {% extends 'inventario/base.html' %}
 
-{% block title %}Distribuir Stock{% endblock %}
+{% block title %}Distribuir Stock | Boccherini{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-5xl mx-auto py-6 space-y-6">
 
     <!-- ENCABEZADO -->
-    <div class="mb-8">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">
-                    Distribuir Stock
-                </h1>
-                <p class="mt-2 text-sm text-gray-500">
-                    Asigne las existencias teóricas del producto a sus ubicaciones físicas.
-                </p>
-            </div>
-            <a href="{% url 'inventario:inventario_operativo' %}"
-               class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition">
-                ← Inventario Operativo
-            </a>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="boxes" class="w-7 h-7 text-[#0055A5]"></i>
+                Distribuir Stock
+            </h1>
+            <p class="mt-1 text-sm text-slate-500">
+                Asigne las existencias teóricas del producto a sus ubicaciones físicas.
+            </p>
         </div>
+        <a href="{% url 'inventario:inventario_operativo' %}"
+           class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg flex items-center gap-2 transition font-bold text-xs shadow-sm border border-slate-200">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Inventario Operativo
+        </a>
     </div>
 
     <!-- INFORMACIÓN DEL PRODUCTO -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-                <p class="text-xs font-semibold text-gray-500 uppercase">Código</p>
-                <p class="mt-1 text-lg font-mono font-bold text-gray-800">{{ producto.codigo_barras }}</p>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+            
+            <div class="md:pr-6">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Código</p>
+                <p class="text-lg font-mono font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="barcode" class="w-4 h-4 text-slate-400"></i>
+                    {{ producto.codigo_barras }}
+                </p>
             </div>
-            <div>
-                <p class="text-xs font-semibold text-gray-500 uppercase">Producto</p>
-                <p class="mt-1 text-lg font-semibold text-gray-800">{{ producto.descripcion }}</p>
+            
+            <div class="md:px-6 pt-4 md:pt-0">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Producto</p>
+                <p class="text-base font-bold text-slate-800 flex items-start gap-2 leading-tight">
+                    <i data-lucide="package" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
+                    {{ producto.descripcion }}
+                </p>
             </div>
-            <div>
-                <p class="text-xs font-semibold text-gray-500 uppercase">Stock teórico</p>
-                <p class="mt-1 text-2xl font-bold text-gray-800">{{ producto.stock_teorico }}</p>
+            
+            <div class="md:pl-6 pt-4 md:pt-0">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Stock teórico</p>
+                <p class="text-2xl font-black text-[#2563EB] flex items-center gap-2">
+                    <i data-lucide="layers" class="w-5 h-5 text-blue-300"></i>
+                    {{ producto.stock_teorico }}
+                </p>
             </div>
+            
         </div>
     </div>
 
     <!-- RESUMEN -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-white rounded-xl border border-gray-200 p-5">
-            <p class="text-sm text-gray-500">Stock teórico</p>
-            <p class="mt-2 text-2xl font-bold text-gray-800">{{ producto.stock_teorico }}</p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Stock teórico</p>
+            <p class="text-3xl font-black text-slate-800">{{ producto.stock_teorico }}</p>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-200 p-5">
-            <p class="text-sm text-gray-500">Actualmente distribuido</p>
-            <p class="mt-2 text-2xl font-bold text-blue-600">{{ stock_distribuido }}</p>
+        <div class="bg-blue-50/50 rounded-xl border border-blue-100 p-5 shadow-sm">
+            <p class="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1">Actualmente distribuido</p>
+            <p class="text-3xl font-black text-[#2563EB]">{{ stock_distribuido }}</p>
         </div>
 
-        <div class="bg-white rounded-xl border
-            {% if diferencia > 0 %} border-orange-200 bg-orange-50
-            {% elif diferencia == 0 %} border-green-200 bg-green-50
-            {% else %} border-red-200 bg-red-50 {% endif %} p-5">
-            <p class="text-sm text-gray-500">Pendiente de distribuir</p>
-            <p class="mt-2 text-2xl font-bold
-                {% if diferencia > 0 %} text-orange-600
-                {% elif diferencia == 0 %} text-green-600
-                {% else %} text-red-600 {% endif %}">
+        <div class="rounded-xl border shadow-sm p-5 transition-colors
+            {% if diferencia > 0 %} border-amber-200 bg-amber-50
+            {% elif diferencia == 0 %} border-[#A3E6CD] bg-[#E6F7F0]
+            {% else %} border-rose-200 bg-rose-50 {% endif %}">
+            
+            <p class="text-[11px] font-bold uppercase tracking-wider mb-1
+                {% if diferencia > 0 %} text-amber-700
+                {% elif diferencia == 0 %} text-emerald-700
+                {% else %} text-rose-700 {% endif %}">
+                Pendiente de distribuir
+            </p>
+            
+            <p class="text-3xl font-black flex items-center gap-2
+                {% if diferencia > 0 %} text-amber-600
+                {% elif diferencia == 0 %} text-emerald-600
+                {% else %} text-rose-600 {% endif %}">
+                
+                {% if diferencia > 0 %}
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                {% elif diferencia == 0 %}
+                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                {% else %}
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                {% endif %}
+                
                 {{ diferencia }}
             </p>
         </div>
+        
     </div>
 
-    <!-- FORMULARIO -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-800">Agregar distribución</h2>
-        <p class="mt-1 text-sm text-gray-500">
-            Seleccione una ubicación y la cantidad de unidades que desea asignar.
-        </p>
-
-        <form method="post" class="mt-6">
-            {% csrf_token %}
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="md:col-span-2">
-                    <label for="ubicacion" class="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
-                    <select id="ubicacion" name="ubicacion" required
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">Seleccione una ubicación</option>
-                        {% for ubicacion in ubicaciones %}
-                            <option value="{{ ubicacion.id }}">{{ ubicacion }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div>
-                    <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-2">Cantidad</label>
-                    <input id="cantidad" name="cantidad" type="number" min="1" max="{{ diferencia }}" required
-                           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end">
-                <button type="submit" class="inline-flex items-center px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition">
-                    Guardar distribución
-                </button>
-            </div>
-        </form>
-    </div>
-
-    <!-- DISTRIBUCIÓN ACTUAL -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-gray-800">Distribución actual</h2>
-        </div>
-
-        {% if stocks %}
-            <div class="divide-y divide-gray-200">
-                {% for stock in stocks %}
-                    {% if stock.cantidad > 0 %}
-                        <div class="px-6 py-4 flex items-center justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-gray-800">{{ stock.ubicacion }}</p>
-                                <p class="text-xs text-gray-500 mt-1">Ubicación física</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-lg font-bold text-gray-800">{{ stock.cantidad }}</p>
-                                <p class="text-xs text-gray-500">unidades</p>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="px-6 py-10 text-center">
-                <div class="text-4xl mb-3">📦</div>
-                <p class="text-sm text-gray-500">
-                    Este producto todavía no tiene distribución física registrada.
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        
+        <!-- FORMULARIO -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            <div class="bg-[#0A192F] px-6 py-4 border-b border-slate-700">
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-slate-300"></i> Agregar distribución
+                </h2>
+                <p class="mt-0.5 text-[11px] text-slate-400">
+                    Seleccione una ubicación y la cantidad de unidades que desea asignar.
                 </p>
             </div>
-        {% endif %}
+
+            <div class="p-6">
+                <form method="post" class="m-0 space-y-5">
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="ubicacion" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ubicación</label>
+                        <div class="relative">
+                            <select id="ubicacion" name="ubicacion" required
+                                    class="w-full pl-4 pr-10 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all appearance-none">
+                                <option value="">Seleccione una ubicación</option>
+                                {% for ubicacion in ubicaciones %}
+                                    <option value="{{ ubicacion.id }}">{{ ubicacion }}</option>
+                                {% endfor %}
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="cantidad" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Cantidad</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                                <i data-lucide="hash" class="w-4 h-4"></i>
+                            </span>
+                            <input id="cantidad" name="cantidad" type="number" min="1" max="{{ diferencia }}" required
+                                   class="w-full pl-10 pr-4 py-3 bg-white border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm text-slate-800 shadow-sm transition-all">
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-5 border-t border-slate-100 flex justify-end">
+                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm shadow-sm transition-colors cursor-pointer border-0">
+                            Guardar distribución <i data-lucide="save" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- DISTRIBUCIÓN ACTUAL -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2 uppercase tracking-wider">
+                    <i data-lucide="list-checks" class="w-4 h-4 text-slate-500"></i> Distribución actual
+                </h2>
+            </div>
+
+            {% if stocks %}
+                <div class="divide-y divide-slate-100 max-h-[350px] overflow-y-auto">
+                    {% for stock in stocks %}
+                        {% if stock.cantidad > 0 %}
+                            <div class="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center shrink-0">
+                                        <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-800">{{ stock.ubicacion }}</p>
+                                        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">Ubicación física</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-black text-slate-800">{{ stock.cantidad }}</p>
+                                    <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">unidades</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="px-6 py-12 text-center bg-slate-50/50">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mx-auto mb-3 text-slate-300 border border-slate-200">
+                        <i data-lucide="package-search" class="w-8 h-8"></i>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700 mb-1">
+                        Sin distribución
+                    </p>
+                    <p class="text-xs text-slate-500 max-w-xs mx-auto">
+                        Este producto todavía no tiene distribución física registrada.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+        
     </div>
 
 </div>

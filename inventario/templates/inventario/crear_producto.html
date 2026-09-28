@@ -3,124 +3,168 @@
 {% block title %}Nuevo Producto | Boccherini{% endblock %}
 
 {% block content %}
-<div class="max-w-xl mx-auto">
-    <div class="mb-6 flex items-center justify-between">
+<div class="max-w-2xl mx-auto py-4">
+    
+    <!-- ENCABEZADO Y BOTÓN VOLVER -->
+    <div class="mb-5 flex items-center justify-between">
         <div>
-            <h2 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">Registrar Nuevo Producto</h2>
+            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="package-plus" class="w-6 h-6 text-[#0055A5]"></i>
+                Registrar Nuevo Producto
+            </h2>
             <p class="text-sm text-slate-500 mt-1">Añada un nuevo artículo al maestro de inventario.</p>
         </div>
-        <a href="{% url 'inventario:lista_productos' %}" class="text-sm font-bold text-slate-500 hover:text-slate-700 underline">
-            &larr; Volver a la lista
+        <a href="{% url 'inventario:lista_productos' %}" class="text-xs font-bold text-slate-500 hover:text-[#0055A5] flex items-center gap-1.5 transition-colors bg-white px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Volver a la lista
         </a>
     </div>
 
-    <div class="bg-white rounded-2xl shadow-xl border border-slate-200/80 p-8">
-        <form method="POST" class="space-y-6">
-            {% csrf_token %}
-            
-            <!-- === BLOQUE DE ALERTA PARA ERRORES === -->
-            {% if form.errors %}
-            <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl text-sm text-red-700">
-                <p class="font-bold flex items-center gap-1.5">
-                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                    Por favor corrige los siguientes errores:
-                </p>
-                <ul class="list-disc pl-5 mt-2 space-y-1">
-                    {% for field in form %}
-                        {% if field.errors %}
-                            {% for error in field.errors %}
-                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+    <!-- CONTENEDOR DEL FORMULARIO -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        
+        <div class="bg-[#0A192F] px-6 py-4 border-b border-slate-700">
+            <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                <i data-lucide="edit-3" class="w-4 h-4 text-slate-300"></i> Ficha del Artículo
+            </h3>
+        </div>
+
+        <div class="p-6">
+            <form method="POST" class="space-y-6 m-0">
+                {% csrf_token %}
+                
+                <!-- === BLOQUE DE ALERTA PARA ERRORES === -->
+                {% if form.errors %}
+                <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-800 shadow-sm mb-6">
+                    <p class="font-bold flex items-center gap-1.5 mb-2">
+                        <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600"></i>
+                        Por favor corrige los siguientes errores:
+                    </p>
+                    <ul class="list-disc pl-8 space-y-1 text-xs">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                {% for error in field.errors %}
+                                    <li><strong class="font-bold">{{ field.label }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="space-y-5">
+                    
+                    <!-- Campo: Código de Barras -->
+                    <div>
+                        <label for="{{ form.codigo_barras.id_for_label }}" class="block mb-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            Código de Barras
+                        </label>
+                        {{ form.codigo_barras }}
+                        
+                        {% if form.codigo_barras.errors %}
+                            {% for error in form.codigo_barras.errors %}
+                                <p class="text-[11px] text-rose-600 font-bold mt-1.5 flex items-center gap-1">
+                                    <i data-lucide="alert-triangle" class="w-3 h-3"></i> {{ error }}
+                                </p>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                                <i data-lucide="info" class="w-3.5 h-3.5"></i> Escanee o digite el código único del producto.
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Campo: Descripción -->
+                    <div>
+                        <label for="{{ form.descripcion.id_for_label }}" class="block mb-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                            Descripción del Artículo
+                        </label>
+                        {{ form.descripcion }}
+                        
+                        {% if form.descripcion.errors %}
+                            {% for error in form.descripcion.errors %}
+                                <p class="text-[11px] text-rose-600 font-bold mt-1.5 flex items-center gap-1">
+                                    <i data-lucide="alert-triangle" class="w-3 h-3"></i> {{ error }}
+                                </p>
                             {% endfor %}
                         {% endif %}
-                    {% endfor %}
-                    {% for error in form.non_field_errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
-            
-            <!-- Campo: Código de Barras -->
-            <div>
-                <label for="{{ form.codigo_barras.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">Código de Barras</label>
-                {{ form.codigo_barras }}
-                
-                {% if form.codigo_barras.errors %}
-                    {% for error in form.codigo_barras.errors %}
-                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
-                            ⚠️ {{ error }}
-                        </p>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-xs text-slate-400 mt-1">Escanee o digite el código único del producto.</p>
-                {% endif %}
-            </div>
+                    </div>
 
-            <!-- Campo: Descripción -->
-            <div>
-                <label for="{{ form.descripcion.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">Descripción del Artículo</label>
-                {{ form.descripcion }}
-                
-                {% if form.descripcion.errors %}
-                    {% for error in form.descripcion.errors %}
-                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
-                            ⚠️ {{ error }}
-                        </p>
-                    {% endfor %}
-                {% endif %}
-            </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        
+                        <!-- Campo: Stock Teórico -->
+                        <div>
+                            <label for="{{ form.stock_teorico.id_for_label }}" class="block mb-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                Stock Teórico
+                            </label>
+                            {{ form.stock_teorico }}
+                            
+                            {% if form.stock_teorico.errors %}
+                                {% for error in form.stock_teorico.errors %}
+                                    <p class="text-[11px] text-rose-600 font-bold mt-1.5 flex items-center gap-1">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3"></i> {{ error }}
+                                    </p>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                                    <i data-lucide="info" class="w-3.5 h-3.5"></i> Cantidad esperada en inventario.
+                                </p>
+                            {% endif %}
+                        </div>
 
-            <!-- Campo: Stock Teórico -->
-            <div>
-                <label for="{{ form.stock_teorico.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
-                    Stock Teórico
-                </label>
-                {{ form.stock_teorico }}
-                
-                {% if form.stock_teorico.errors %}
-                    {% for error in form.stock_teorico.errors %}
-                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
-                            ⚠️ {{ error }}
-                        </p>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-xs text-slate-400 mt-1">
-                        Cantidad esperada en inventario.
-                    </p>
-                {% endif %}
-            </div>
+                        <!-- Campo: Ubicación -->
+                        <div>
+                            <label for="{{ form.ubicacion.id_for_label }}" class="block mb-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+                                Ubicación
+                            </label>
+                            <!-- El input real de django se inyecta aquí. Asegúrate en forms.py de agregarle clases como: 'w-full bg-white border border-slate-300 rounded-xl p-3 text-sm focus:ring-[#2563EB]' si no lo hace automáticamente -->
+                            {{ form.ubicacion }}
+                            
+                            {% if form.ubicacion.errors %}
+                                {% for error in form.ubicacion.errors %}
+                                    <p class="text-[11px] text-rose-600 font-bold mt-1.5 flex items-center gap-1">
+                                        <i data-lucide="alert-triangle" class="w-3 h-3"></i> {{ error }}
+                                    </p>
+                                {% endfor %}
+                            {% else %}
+                                <p class="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1">
+                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Seleccione la ubicación física.
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                    </div>
+                </div>
 
-            <!-- Campo: Ubicación -->
-            <div>
-                <label for="{{ form.ubicacion.id_for_label }}" class="block mb-2 text-sm font-bold text-slate-700">
-                    Ubicación
-                </label>
-                {{ form.ubicacion }}
-                
-                {% if form.ubicacion.errors %}
-                    {% for error in form.ubicacion.errors %}
-                        <p class="text-xs text-red-600 font-semibold mt-1.5 flex items-center gap-1">
-                            ⚠️ {{ error }}
-                        </p>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-xs text-slate-400 mt-1">
-                        Seleccione la ubicación física.
-                    </p>
-                {% endif %}
-            </div>
-
-            <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                <a href="{% url 'inventario:lista_productos' %}" class="px-5 py-2.5 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">
-                    Cancelar
-                </a>
-                <button type="submit" class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-colors">
-                    💾 Guardar Producto
-                </button>
-            </div>
-        </form>
+                <!-- ACCIONES -->
+                <div class="pt-5 mt-6 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <a href="{% url 'inventario:lista_productos' %}" class="px-4 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-sm transition-colors shadow-sm text-center">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2 border-0 cursor-pointer">
+                        Guardar Producto <i data-lucide="save" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
+
+<!-- Opcional: Un pequeño script si no puedes inyectar clases de Tailwind desde tu forms.py de Django -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Selecciona todos los inputs, selects y textareas generados por Django
+        const formElements = document.querySelectorAll('input[type="text"], input[type="number"], select, textarea');
+        
+        formElements.forEach(el => {
+            el.classList.add(
+                'w-full', 'bg-white', 'border', 'border-slate-300', 
+                'rounded-xl', 'p-3', 'text-sm', 'text-slate-800',
+                'focus:outline-none', 'focus:ring-2', 'focus:ring-[#2563EB]', 'focus:border-[#2563EB]', 'transition-all'
+            );
+        });
+    });
+</script>
 {% endblock %}

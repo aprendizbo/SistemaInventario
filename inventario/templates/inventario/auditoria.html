@@ -1,197 +1,175 @@
 {% extends 'inventario/base.html' %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
+<div class="max-w-[1400px] w-full mx-auto space-y-5">
 
     <!-- Encabezado Corporativo -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h2 class="mb-1">
-                        <i class="fas fa-shield-alt text-primary"></i>
-                        Auditoría del Sistema
-                    </h2>
-                    <p class="text-muted mb-0">
-                        Registro completo de movimientos realizados por los usuarios
-                    </p>
-                </div>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div>
+            <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-6 h-6 text-[#0055A5]"></i>
+                Auditoría del Sistema
+            </h2>
+            <p class="text-xs text-slate-500 mt-0.5">
+                Registro completo de movimientos realizados por los usuarios
+            </p>
+        </div>
 
-                <div class="d-flex align-items-center gap-3">
-                    <a href="{% url 'inventario:panel_sesiones' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left"></i> Volver al Panel
-                    </a>
-                </div>
-            </div>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'inventario:panel_sesiones' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-1.5 transition font-semibold text-xs shadow-sm">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Volver al Panel
+            </a>
         </div>
     </div>
 
     <!-- Tarjetas Resumen (Arriba) -->
-    <div class="row mb-4">
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-dark mb-0">{{ total_logs|default:logs|length }}</h2>
-                    <small class="text-muted fw-bold">Total Movimientos</small>
-                </div>
-            </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center hover:border-slate-300 transition-colors">
+            <h2 class="text-3xl font-black text-slate-800">{{ total_logs|default:logs|length }}</h2>
+            <small class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-1">Total Movimientos</small>
         </div>
 
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-success mb-0">{{ total_crear|default:0 }}</h2>
-                    <small class="text-muted fw-bold">Creaciones</small>
-                </div>
-            </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center hover:border-emerald-300 transition-colors">
+            <h2 class="text-3xl font-black text-emerald-600">{{ total_crear|default:0 }}</h2>
+            <small class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-1">Creaciones</small>
         </div>
 
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-warning mb-0">{{ total_modificar|default:0 }}</h2>
-                    <small class="text-muted fw-bold">Modificaciones</small>
-                </div>
-            </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center hover:border-amber-300 transition-colors">
+            <h2 class="text-3xl font-black text-amber-500">{{ total_modificar|default:0 }}</h2>
+            <small class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-1">Modificaciones</small>
         </div>
 
-        <div class="col-md-3 col-6 mb-3">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body text-center">
-                    <h2 class="fw-bold text-primary mb-0">{{ total_exportar|default:0 }}</h2>
-                    <small class="text-muted fw-bold">Exportaciones</small>
-                </div>
-            </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col items-center justify-center hover:border-blue-300 transition-colors">
+            <h2 class="text-3xl font-black text-[#2563EB]">{{ total_exportar|default:0 }}</h2>
+            <small class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mt-1">Exportaciones</small>
         </div>
     </div>
 
     <!-- Filtro de Búsqueda -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
-            <div class="input-group">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="fas fa-search text-muted"></i>
-                </span>
-                <input type="text"
-                       id="auditSearch"
-                       class="form-control border-start-0"
-                       placeholder="Buscar usuario, acción o descripción...">
-            </div>
+    <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                <i data-lucide="search" class="w-4 h-4"></i>
+            </span>
+            <input type="text"
+                   id="auditSearch"
+                   class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm transition-all text-slate-700 placeholder:text-slate-400"
+                   placeholder="Buscar usuario, acción o descripción...">
         </div>
     </div>
 
     <!-- Línea de Tiempo (Timeline) -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-4">
-            <div class="timeline" id="timelineContainer">
-                {% for log in logs %}
-                <!-- Elemento de la línea de tiempo -->
-                <div class="timeline-item position-relative pb-4 ps-4 border-start border-2 border-secondary-subtle">
+    <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        
+        <!-- Contenedor Timeline -->
+        <div class="{% if logs %}relative border-l-2 border-slate-100 ml-3 md:ml-4 space-y-8{% endif %}" id="timelineContainer">
+            
+            {% for log in logs %}
+            <!-- Elemento de la línea de tiempo -->
+            <div class="timeline-item relative pl-6 md:pl-8">
+                
+                <!-- Indicador visual (Íconos dinámicos en vez de emojis) -->
+                <div class="absolute -left-[17px] top-0 bg-white p-1 rounded-full z-10 shadow-sm border border-slate-100">
+                    {% if log.accion == 'CREAR' %}
+                        <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center"><i data-lucide="plus" class="w-3.5 h-3.5"></i></div>
+                    {% elif log.accion == 'MODIFICAR' %}
+                        <div class="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></div>
+                    {% elif log.accion == 'ELIMINAR' %}
+                        <div class="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></div>
+                    {% elif log.accion == 'EXPORTAR' or log.accion == 'IMPORTAR' %}
+                        <div class="w-6 h-6 rounded-full bg-blue-100 text-[#2563EB] flex items-center justify-center"><i data-lucide="arrow-right-left" class="w-3.5 h-3.5"></i></div>
+                    {% else %}
+                        <div class="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center"><i data-lucide="activity" class="w-3.5 h-3.5"></i></div>
+                    {% endif %}
+                </div>
+
+                <!-- Contenido del Registro -->
+                <div class="bg-white border border-slate-100 rounded-xl p-4 shadow-sm hover:border-slate-300 hover:shadow-md transition-all">
                     
-                    <!-- Indicador visual (Emoji) -->
-                    <div class="position-absolute top-0 start-0 translate-middle bg-white rounded-circle p-1" style="left: -1px; z-index: 2;">
-                        {% if log.accion == 'CREAR' %}
-                            <span class="fs-5">🟢</span>
-                        {% elif log.accion == 'MODIFICAR' %}
-                            <span class="fs-5">🟡</span>
-                        {% elif log.accion == 'ELIMINAR' %}
-                            <span class="fs-5">🔴</span>
-                        {% elif log.accion == 'EXPORTAR' or log.accion == 'IMPORTAR' %}
-                            <span class="fs-5">🔵</span>
-                        {% else %}
-                            <span class="fs-5">⚪</span>
-                        {% endif %}
-                    </div>
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3 border-b border-slate-50 pb-3">
+                        <div>
+                            {% if log.accion == 'CREAR' %}
+                                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">CREACIÓN</span>
+                            {% elif log.accion == 'MODIFICAR' %}
+                                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">MODIFICACIÓN</span>
+                            {% elif log.accion == 'ELIMINAR' %}
+                                <span class="bg-rose-100 text-rose-800 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">ELIMINACIÓN</span>
+                            {% elif log.accion == 'EXPORTAR' %}
+                                <span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">EXPORTACIÓN</span>
+                            {% elif log.accion == 'IMPORTAR' %}
+                                <span class="bg-[#0A192F] text-white text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">IMPORTACIÓN</span>
+                            {% else %}
+                                <span class="bg-slate-100 text-slate-600 text-[10px] font-bold px-2.5 py-0.5 rounded uppercase tracking-wider">{{ log.accion }}</span>
+                            {% endif %}
+                        </div>
 
-                    <!-- Contenido del Registro -->
-                    <div class="card border shadow-none ms-2">
-                        <div class="card-body py-3">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                                
-                                <div>
-                                    <div class="mb-2">
-                                        {% if log.accion == 'CREAR' %}
-                                            <span class="badge bg-success">CREACIÓN</span>
-                                        {% elif log.accion == 'MODIFICAR' %}
-                                            <span class="badge bg-warning text-dark">MODIFICACIÓN</span>
-                                        {% elif log.accion == 'ELIMINAR' %}
-                                            <span class="badge bg-danger">ELIMINACIÓN</span>
-                                        {% elif log.accion == 'EXPORTAR' %}
-                                            <span class="badge bg-info text-dark">EXPORTACIÓN</span>
-                                        {% elif log.accion == 'IMPORTAR' %}
-                                            <span class="badge bg-primary">IMPORTACIÓN</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ log.accion }}</span>
-                                        {% endif %}
-                                    </div>
-
-                                    <!-- Reemplazo de Usuario -->
-                                    <div class="small text-muted">
-                                        Usuario: <strong>{{ log.usuario.username|default:"Sistema" }}</strong>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Nuevo bloque agregado justo antes de la descripción -->
-                            <div class="row mt-2 mb-2">
-                                <div class="col-md-3">
-                                    <small class="text-muted">Modelo</small><br>
-                                    <strong>{{ log.modelo }}</strong>
-                                </div>
-                                <div class="col-md-3">
-                                    <small class="text-muted">Acción</small><br>
-                                    <strong>{{ log.get_accion_display }}</strong>
-                                </div>
-                                <div class="col-md-3">
-                                    <small class="text-muted">Fecha</small><br>
-                                    <!-- Reemplazo de Fecha y Hora -->
-                                    <strong>{{ log.fecha_hora|date:"d/m/Y" }}</strong><small class="text-muted ms-1">{{ log.fecha_hora|date:"H:i:s" }}</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <small class="text-muted">IP</small><br>
-                                    <strong>{{ log.ip_direccion|default:"N/A" }}</strong>
-                                </div>
-                            </div>
-
-                            <!-- Reemplazo de {{ log.detalle }} por {{ log.descripcion }} -->
-                            <div class="bg-light p-2 rounded border-start border-3 border-secondary text-secondary mt-2">
-                                {{ log.descripcion }}
-                            </div>
-                            
+                        <div class="text-[11px] text-slate-500">
+                            Usuario: <strong class="text-slate-800">{{ log.usuario.username|default:"Sistema" }}</strong>
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                        <div>
+                            <small class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Modelo</small>
+                            <strong class="text-xs text-slate-800">{{ log.modelo }}</strong>
+                        </div>
+                        <div>
+                            <small class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Acción</small>
+                            <strong class="text-xs text-slate-800">{{ log.get_accion_display }}</strong>
+                        </div>
+                        <div>
+                            <small class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Fecha</small>
+                            <div class="flex items-center gap-1">
+                                <strong class="text-xs text-slate-800">{{ log.fecha_hora|date:"d/m/Y" }}</strong>
+                                <small class="text-xs text-slate-400">{{ log.fecha_hora|date:"H:i:s" }}</small>
+                            </div>
+                        </div>
+                        <div>
+                            <small class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">IP</small>
+                            <strong class="text-xs text-slate-800 font-mono">{{ log.ip_direccion|default:"N/A" }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 p-3 rounded-r-lg border-l-4 border-slate-300 text-slate-600 text-[11px] leading-relaxed mt-4 shadow-inner">
+                        {{ log.descripcion }}
+                    </div>
                 </div>
-                {% empty %}
-                <div class="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <p class="text-muted mb-0 fs-5">No existen registros de auditoría para mostrar.</p>
-                </div>
-                {% endfor %}
             </div>
+            
+            {% empty %}
+            <!-- Estado vacío -->
+            <div class="col-span-full bg-slate-50/50 rounded-2xl p-12 text-center flex flex-col items-center justify-center border border-slate-200 border-dashed">
+                <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-slate-300">
+                    <i data-lucide="inbox" class="w-8 h-8"></i>
+                </div>
+                <p class="text-sm font-bold text-slate-700 mb-0">No existen registros de auditoría para mostrar.</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
-
 </div>
 
-<!-- Script para el Filtro de Búsqueda -->
+<!-- Script para el Filtro de Búsqueda (Sin modificar la lógica) -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const searchInput = document.getElementById('auditSearch');
         
-        searchInput.addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            const items = document.querySelectorAll('.timeline-item');
+        if(searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const filter = this.value.toLowerCase();
+                const items = document.querySelectorAll('.timeline-item');
 
-            items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                if (text.includes(filter)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(filter)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
             });
-        });
+        }
     });
 </script>
 {% endblock %}

@@ -4,716 +4,346 @@
 
 {% block content %}
 
-<div class="max-w-6xl mx-auto">
+<div class="max-w-[1400px] w-full mx-auto space-y-5">
 
     <!-- ===================================================== -->
     <!-- CABECERA -->
     <!-- ===================================================== -->
-
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <div>
-            <h1 class="text-2xl font-extrabold text-boccherini-blue tracking-tight">
+            <h1 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <i data-lucide="database" class="w-6 h-6 text-[#0055A5]"></i>
                 Bases de Inventario
             </h1>
-
-            <p class="text-sm text-slate-500 mt-1">
+            <p class="text-xs text-slate-500 mt-0.5">
                 Administración y control de las bases históricas de inventario.
             </p>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-            <button
-                type="button"
-                onclick="abrirModalNuevaBase()"
-                class="inline-flex items-center justify-center gap-2
-                       text-sm font-semibold text-white
-                       bg-blue-600 hover:bg-blue-700
-                       px-4 py-2.5 rounded-xl
-                       shadow-md transition-colors">
-                <span>📦</span>
-                <span>Nueva Base</span>
+        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <button type="button" onclick="abrirModalNuevaBase()" class="bg-[#2563EB] hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-1.5 transition shadow-sm">
+                <i data-lucide="package" class="w-4 h-4"></i> Nueva Base
             </button>
         </div>
-
     </div>
 
 
     <!-- ===================================================== -->
     <!-- MENSAJES -->
     <!-- ===================================================== -->
-
     {% if messages %}
-
-        <div class="mb-6 space-y-3">
-
+        <div class="space-y-3">
             {% for message in messages %}
-
-                <div class="
-                    p-4 rounded-xl text-sm font-semibold
-                    flex items-center gap-2 shadow-sm
+                <div class="p-4 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm
                     {% if message.tags == 'error' %}
-                        bg-rose-50 text-rose-700 border border-rose-200
+                        bg-rose-50 text-rose-800 border border-rose-200
                     {% else %}
-                        bg-emerald-50 text-emerald-700 border border-emerald-200
-                    {% endif %}
-                ">
-
+                        bg-[#E6F7F0] text-emerald-800 border border-[#A3E6CD]
+                    {% endif %}">
+                    
                     {% if message.tags == 'error' %}
-                        <span>⚠️</span>
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
                     {% else %}
-                        <span>✅</span>
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
                     {% endif %}
-
+                    
                     <span>{{ message }}</span>
-
                 </div>
-
             {% endfor %}
-
         </div>
-
     {% endif %}
 
 
     <!-- ===================================================== -->
     <!-- INFORMACIÓN DEL SISTEMA -->
     <!-- ===================================================== -->
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         <!-- TOTAL BASES -->
-
-        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-
-            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Total de bases
-            </p>
-
-            <p class="text-3xl font-extrabold text-boccherini-blue mt-2">
-                {{ bases|length }}
-            </p>
-
-            <p class="text-xs text-slate-400 mt-1">
-                Bases registradas en el sistema
-            </p>
-
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-start gap-4">
+            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                <i data-lucide="layers" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Total de bases</p>
+                <p class="text-2xl font-black text-slate-800 mt-1">{{ bases|length }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">Bases registradas en el sistema</p>
+            </div>
         </div>
-
 
         <!-- BASE ACTIVA -->
-
-        <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 shadow-sm">
-
-            <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">
-                Estado actual
-            </p>
-
-            {% with base_activa=bases|first %}
-
-                <p class="text-lg font-extrabold text-emerald-700 mt-2">
-
-                    {% for base in bases %}
-
-                        {% if base.estado == 'ACTIVA' %}
-                            Base activa
-                        {% endif %}
-
-                    {% empty %}
-                        Sin bases
-                    {% endfor %}
-
-                </p>
-
-            {% endwith %}
-
-            <p class="text-xs text-emerald-600 mt-1">
-                Solo puede existir una base activa.
-            </p>
-
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-start gap-4 relative overflow-hidden">
+            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg relative z-10">
+                <i data-lucide="activity" class="w-6 h-6"></i>
+            </div>
+            <div class="relative z-10">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Estado actual</p>
+                {% with base_activa=bases|first %}
+                    <p class="text-lg font-black text-slate-800 mt-1">
+                        {% for base in bases %}
+                            {% if base.estado == 'ACTIVA' %}
+                                Base activa
+                            {% endif %}
+                        {% empty %}
+                            Sin bases
+                        {% endfor %}
+                    </p>
+                {% endwith %}
+                <p class="text-xs text-slate-400 mt-0.5">Solo puede existir una base activa.</p>
+            </div>
+            <div class="absolute -right-4 -bottom-4 opacity-5 text-emerald-600">
+                <i data-lucide="activity" class="w-32 h-32"></i>
+            </div>
         </div>
-
 
         <!-- HISTORIAL -->
-
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-5 shadow-sm">
-
-            <p class="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Historial
-            </p>
-
-            <p class="text-lg font-extrabold text-slate-700 mt-2">
-                Trazabilidad activa
-            </p>
-
-            <p class="text-xs text-slate-400 mt-1">
-                Las bases cerradas conservan su histórico.
-            </p>
-
+        <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-start gap-4">
+            <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                <i data-lucide="history" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Historial</p>
+                <p class="text-lg font-black text-slate-800 mt-1">Trazabilidad activa</p>
+                <p class="text-xs text-slate-400 mt-0.5">Las bases cerradas conservan su histórico.</p>
+            </div>
         </div>
-
     </div>
 
 
     <!-- ===================================================== -->
     <!-- EXPLICACIÓN DEL FLUJO -->
     <!-- ===================================================== -->
-
-    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 mb-8">
-
-        <div class="flex items-start gap-3">
-
-            <div class="text-xl">
-                ℹ️
-            </div>
-
-            <div>
-
-                <h3 class="text-sm font-extrabold text-blue-900">
-                    ¿Cómo funciona una base de inventario?
-                </h3>
-
-                <p class="text-sm text-blue-800 mt-1 leading-relaxed">
-
-                    Una base representa una versión del inventario.
-                    Mientras esté activa puede utilizarse para realizar
-                    sesiones de conteo físico. Al cerrarla, el sistema
-                    conserva una fotografía histórica de los productos
-                    y sus cantidades contadas.
-
-                </p>
-
-                <p class="text-sm text-blue-800 mt-2 leading-relaxed">
-
-                    <strong>
-                        Los productos del Maestro no se eliminan
-                        automáticamente.
-                    </strong>
-
-                    Esto permite mantener la continuidad del catálogo
-                    y conservar la trazabilidad de los inventarios
-                    anteriores.
-
-                </p>
-
-            </div>
-
+    <div class="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+        <div class="text-blue-500 mt-0.5">
+            <i data-lucide="info" class="w-5 h-5"></i>
         </div>
-
+        <div>
+            <h3 class="text-sm font-bold text-blue-900">¿Cómo funciona una base de inventario?</h3>
+            <p class="text-xs text-blue-800/80 mt-1 leading-relaxed">
+                Una base representa una versión del inventario. Mientras esté activa puede utilizarse para realizar sesiones de conteo físico. Al cerrarla, el sistema conserva una fotografía histórica de los productos y sus cantidades contadas.
+            </p>
+            <p class="text-xs text-blue-800/80 mt-2 leading-relaxed">
+                <strong class="font-bold text-blue-900">Los productos del Maestro no se eliminan automáticamente.</strong> Esto permite mantener la continuidad del catálogo y conservar la trazabilidad de los inventarios anteriores.
+            </p>
+        </div>
     </div>
 
 
     <!-- ===================================================== -->
     <!-- TABLA DE BASES -->
     <!-- ===================================================== -->
-
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-        <div class="bg-boccherini-blue px-6 py-4 flex items-center justify-between"
-             style="background-color:#0b2240;">
-
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+        
+        <div class="bg-[#0A192F] text-white px-4 py-3 flex items-center justify-between">
             <div>
-
-                <h2 class="text-base font-extrabold text-white">
-                    Registro de Bases de Inventario
-                </h2>
-
-                <p class="text-xs text-slate-300 mt-1">
-                    Historial de bases creadas y cerradas.
-                </p>
-
+                <h2 class="text-sm font-bold tracking-wider uppercase">Registro de Bases de Inventario</h2>
+                <p class="text-[10px] text-slate-400 mt-0.5 font-normal tracking-normal lowercase first-letter:uppercase">Historial de bases creadas y cerradas.</p>
             </div>
-
-            <span class="text-xs font-bold text-emerald-300">
+            <span class="bg-[#0A192F] border border-slate-600 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
                 ● SISTEMA ACTIVO
             </span>
-
         </div>
 
-
         {% if bases %}
-
             <div class="overflow-x-auto">
-
-                <table class="w-full">
-
-                    <thead class="bg-slate-50 border-b border-slate-200">
-
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                         <tr>
-
-                            <th class="px-6 py-4 text-left text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Base
-                            </th>
-
-                            <th class="px-6 py-4 text-left text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Estado
-                            </th>
-
-                            <th class="px-6 py-4 text-left text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Creación
-                            </th>
-
-                            <th class="px-6 py-4 text-left text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Cierre
-                            </th>
-
-                            <th class="px-6 py-4 text-left text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Creado por
-                            </th>
-
-                            <th class="px-6 py-4 text-left text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Cerrado por
-                            </th>
-
-                            <th class="px-6 py-4 text-center text-xs font-extrabold
-                                       text-slate-500 uppercase tracking-wider">
-                                Acción
-                            </th>
-
+                            <th class="py-3 px-4">Base</th>
+                            <th class="py-3 px-4">Estado</th>
+                            <th class="py-3 px-4">Creación</th>
+                            <th class="py-3 px-4">Cierre</th>
+                            <th class="py-3 px-4">Creado por</th>
+                            <th class="py-3 px-4">Cerrado por</th>
+                            <th class="py-3 px-4 text-center">Acción</th>
                         </tr>
-
                     </thead>
 
-
                     <tbody class="divide-y divide-slate-100">
-
                         {% for base in bases %}
-
-                            <tr class="hover:bg-slate-50 transition-colors">
-
+                            <tr class="hover:bg-slate-50 transition">
+                                
                                 <!-- NOMBRE -->
-
-                                <td class="px-6 py-5">
-
-                                    <div class="font-bold text-slate-800">
-                                        {{ base.nombre }}
-                                    </div>
-
-                                    <div class="text-xs text-slate-400 mt-1">
-                                        ID: #{{ base.id }}
-                                    </div>
-
+                                <td class="py-3 px-4">
+                                    <div class="font-bold text-slate-900">{{ base.nombre }}</div>
+                                    <div class="text-[11px] text-slate-400 mt-0.5">ID: #{{ base.id }}</div>
                                 </td>
-
 
                                 <!-- ESTADO -->
-
-                                <td class="px-6 py-5">
-
+                                <td class="py-3 px-4">
                                     {% if base.estado == 'ACTIVA' %}
-
-                                        <span class="
-                                            inline-flex items-center gap-1.5
-                                            px-3 py-1 rounded-full
-                                            text-[10px] font-extrabold uppercase
-                                            tracking-wider
-                                            bg-emerald-50
-                                            text-emerald-700
-                                            border border-emerald-200
-                                        ">
-
-                                            <span class="h-1.5 w-1.5 rounded-full
-                                                         bg-emerald-500 animate-pulse">
-                                            </span>
-
-                                            ACTIVA
-
+                                        <span class="bg-[#A3E6CD] text-emerald-900 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> ACTIVA
                                         </span>
-
                                     {% else %}
-
-                                        <span class="
-                                            inline-flex items-center gap-1.5
-                                            px-3 py-1 rounded-full
-                                            text-[10px] font-extrabold uppercase
-                                            tracking-wider
-                                            bg-slate-100
-                                            text-slate-500
-                                            border border-slate-200
-                                        ">
-
+                                        <span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1.5 w-fit border border-slate-200">
                                             ● CERRADA
-
                                         </span>
-
                                     {% endif %}
-
                                 </td>
-
 
                                 <!-- FECHA CREACIÓN -->
-
-                                <td class="px-6 py-5 text-sm text-slate-600">
-
+                                <td class="py-3 px-4 font-medium text-slate-600">
                                     {{ base.fecha_creacion|date:"d/m/Y H:i" }}
-
                                 </td>
-
 
                                 <!-- FECHA CIERRE -->
-
-                                <td class="px-6 py-5 text-sm text-slate-600">
-
+                                <td class="py-3 px-4 font-medium text-slate-600">
                                     {% if base.fecha_cierre %}
-
                                         {{ base.fecha_cierre|date:"d/m/Y H:i" }}
-
                                     {% else %}
-
-                                        <span class="text-slate-400">
-                                            —
-                                        </span>
-
+                                        <span class="text-slate-400">—</span>
                                     {% endif %}
-
                                 </td>
-
 
                                 <!-- CREADO POR -->
-
-                                <td class="px-6 py-5 text-sm text-slate-600">
-
+                                <td class="py-3 px-4 font-medium text-slate-600">
                                     {% if base.creado_por %}
-
                                         {{ base.creado_por.username }}
-
                                     {% else %}
-
-                                        <span class="text-slate-400">
-                                            —
-                                        </span>
-
+                                        <span class="text-slate-400">—</span>
                                     {% endif %}
-
                                 </td>
-
 
                                 <!-- CERRADO POR -->
-
-                                <td class="px-6 py-5 text-sm text-slate-600">
-
+                                <td class="py-3 px-4 font-medium text-slate-600">
                                     {% if base.cerrado_por %}
-
                                         {{ base.cerrado_por.username }}
-
                                     {% else %}
-
-                                        <span class="text-slate-400">
-                                            —
-                                        </span>
-
+                                        <span class="text-slate-400">—</span>
                                     {% endif %}
-
                                 </td>
-
 
                                 <!-- ACCIONES -->
-
-                                <td class="px-6 py-5 text-center">
-
-                                    {% if base.estado == 'ACTIVA' %}
-
-                                        <form
-                                            method="POST"
-                                            action="{% url 'inventario:cerrar_base_inventario' base.id %}"
-                                            onsubmit="return confirmarCierre('{{ base.nombre|escapejs }}');"
-                                        >
-
-                                            {% csrf_token %}
-
-                                            <button
-                                                type="submit"
-                                                class="
-                                                    inline-flex items-center justify-center
-                                                    gap-1.5
-                                                    bg-rose-600
-                                                    hover:bg-rose-700
-                                                    text-white
-                                                    font-bold
-                                                    text-xs
-                                                    px-4 py-2.5
-                                                    rounded-xl
-                                                    shadow-sm
-                                                    transition-colors
-                                                "
-                                            >
-
-                                                🔒 Cerrar base
-
-                                            </button>
-
-                                        </form>
-
-                                    {% else %}
-
-                                        <span class="
-                                            inline-flex items-center
-                                            justify-center
-                                            bg-slate-50
-                                            text-slate-400
-                                            border border-slate-200
-                                            font-semibold
-                                            text-xs
-                                            px-4 py-2.5
-                                            rounded-xl
-                                        ">
-
-                                            Sin acciones
-
-                                        </span>
-
-                                    {% endif %}
-
+                                <td class="py-3 px-4">
+                                    <div class="flex justify-center">
+                                        {% if base.estado == 'ACTIVA' %}
+                                            <form method="POST" action="{% url 'inventario:cerrar_base_inventario' base.id %}" onsubmit="return confirmarCierre('{{ base.nombre|escapejs }}');">
+                                                {% csrf_token %}
+                                                <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold text-[11px] shadow-sm transition-colors">
+                                                    <i data-lucide="lock" class="w-3.5 h-3.5"></i> Cerrar base
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            <span class="bg-slate-50 text-slate-400 border border-slate-200 px-3 py-1.5 rounded-lg font-semibold text-[11px]">
+                                                Sin acciones
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 </td>
-
                             </tr>
-
                         {% endfor %}
-
                     </tbody>
-
                 </table>
-
             </div>
-
         {% else %}
-
             <!-- ================================================= -->
             <!-- SIN BASES -->
             <!-- ================================================= -->
-
-            <div class="p-12 text-center">
-
-                <div class="text-5xl mb-4">
-                    📦
+            <div class="p-12 text-center flex flex-col items-center justify-center bg-slate-50/50">
+                <div class="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center mb-4 text-slate-300">
+                    <i data-lucide="package-open" class="w-8 h-8"></i>
                 </div>
-
-                <h3 class="text-lg font-extrabold text-slate-800">
-                    No hay bases de inventario
-                </h3>
-
-                <p class="text-sm text-slate-400 mt-2 max-w-md mx-auto">
-
-                    Actualmente no existen bases registradas.
-                    Regrese al Control de Sesiones para crear
-                    la primera base de inventario.
-
+                <h3 class="text-base font-extrabold text-slate-800">No hay bases de inventario</h3>
+                <p class="text-xs text-slate-500 mt-2 max-w-sm mx-auto">
+                    Actualmente no existen bases registradas. Regrese al Control de Sesiones para crear la primera base de inventario.
                 </p>
-
-                <a
-                    href="{% url 'inventario:panel_sesiones' %}"
-                    class="
-                        inline-flex items-center
-                        mt-6
-                        px-5 py-2.5
-                        rounded-xl
-                        bg-blue-600
-                        hover:bg-blue-700
-                        text-white
-                        text-sm
-                        font-bold
-                        shadow-sm
-                        transition-colors
-                    "
-                >
-
-                    Ir al Control de Sesiones →
-
+                <a href="{% url 'inventario:panel_sesiones' %}" class="mt-6 bg-[#2563EB] hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm font-bold shadow-sm transition">
+                    Ir al Control de Sesiones <i data-lucide="arrow-right" class="w-4 h-4"></i>
                 </a>
-
             </div>
-
         {% endif %}
-
     </div>
 
 </div>
 
-<!-- 👇 MODAL AÑADIDO (PASO 4) 👇 -->
 <!-- ========================================================= -->
 <!-- MODAL NUEVA BASE DE INVENTARIO -->
 <!-- ========================================================= -->
-<div id="modalNuevaBase"
-     class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
-
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
-
+<div id="modalNuevaBase" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4 transition-opacity">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden transform scale-100 transition-transform">
+        
         <!-- ENCABEZADO -->
-
-        <div class="bg-boccherini-blue px-6 py-5"
-             style="background-color:#0b2240;">
-
-            <div class="flex items-center justify-between">
-
-                <div>
-                    <h3 class="text-lg font-extrabold text-white">
-                        Nueva Base de Inventario
-                    </h3>
-
-                    <p class="text-xs text-slate-300 mt-1">
-                        Cree una nueva base para iniciar un ciclo de inventario.
-                    </p>
-                </div>
-
-                <button
-                    type="button"
-                    onclick="cerrarModalNuevaBase()"
-                    class="text-slate-300 hover:text-white text-2xl font-bold leading-none"
-                    aria-label="Cerrar"
-                >
-                    &times;
-                </button>
-
+        <div class="bg-[#0A192F] px-6 py-4 flex items-center justify-between border-b border-slate-700">
+            <div>
+                <h3 class="text-base font-extrabold text-white">Nueva Base de Inventario</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Cree una nueva base para iniciar un ciclo de inventario.</p>
             </div>
-
+            <button type="button" onclick="cerrarModalNuevaBase()" class="text-slate-400 hover:text-white transition-colors text-2xl font-bold p-1 leading-none focus:outline-none" aria-label="Cerrar">
+                &times;
+            </button>
         </div>
 
-
         <!-- FORMULARIO -->
-
-        <form
-            action="{% url 'inventario:crear_base_inventario' %}"
-            method="POST"
-        >
-
+        <form action="{% url 'inventario:crear_base_inventario' %}" method="POST">
             {% csrf_token %}
-
             <div class="p-6">
-
-                <label
-                    for="nombre_base"
-                    class="block text-sm font-bold text-slate-700 mb-2"
-                >
+                <label for="nombre_base" class="block text-sm font-bold text-slate-700 mb-2">
                     Nombre de la base
                 </label>
-
-                <input
-                    id="nombre_base"
-                    type="text"
-                    name="nombre_base"
-                    placeholder="Ej: Inventario General Agosto 2026"
-                    class="w-full px-4 py-3 rounded-xl border border-slate-300
-                           focus:outline-none focus:ring-2 focus:ring-blue-600
-                           focus:border-blue-600 text-sm"
-                    autocomplete="off"
-                >
-
+                <input id="nombre_base" type="text" name="nombre_base" placeholder="Ej: Inventario General Agosto 2026" 
+                       class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:border-[#2563EB] text-sm shadow-sm transition-all" autocomplete="off">
                 <p class="text-xs text-slate-400 mt-2">
                     Si no ingresa un nombre, el sistema generará uno automáticamente.
                 </p>
-
             </div>
-
 
             <!-- ACCIONES -->
-
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200
-                        flex justify-end gap-3">
-
-                <button
-                    type="button"
-                    onclick="cerrarModalNuevaBase()"
-                    class="px-4 py-2.5 rounded-xl border border-slate-300
-                           bg-white text-slate-700 font-bold text-sm
-                           hover:bg-slate-100 transition-colors"
-                >
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+                <button type="button" onclick="cerrarModalNuevaBase()" class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold text-sm hover:bg-slate-100 transition-colors">
                     Cancelar
                 </button>
-
-                <button
-                    type="submit"
-                    class="px-5 py-2.5 rounded-xl bg-blue-600
-                           hover:bg-blue-700 text-white font-bold text-sm
-                           shadow-md transition-colors"
-                >
+                <button type="submit" class="px-5 py-2 rounded-lg bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-sm shadow-sm transition-colors">
                     Crear Base
                 </button>
-
             </div>
-
         </form>
-
     </div>
 </div>
-<!-- 👆 FIN MODAL AÑADIDO 👆 -->
 
 <!-- ========================================================= -->
-<!-- CONFIRMACIÓN DE CIERRE -->
+<!-- SCRIPTS Y CONFIRMACIÓN -->
 <!-- ========================================================= -->
-
 <script>
-
-function abrirModalNuevaBase() {
-
-    const modal = document.getElementById('modalNuevaBase');
-
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    const campoNombre = document.getElementById('nombre_base');
-
-    if (campoNombre) {
-        setTimeout(() => campoNombre.focus(), 100);
-    }
-
-    document.body.style.overflow = 'hidden';
-}
-
-function cerrarModalNuevaBase() {
-
-    const modal = document.getElementById('modalNuevaBase');
-
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-
-    document.body.style.overflow = 'auto';
-}
-
-document.getElementById('modalNuevaBase').addEventListener(
-    'click',
-    function(event) {
-
-        if (event.target === this) {
-            cerrarModalNuevaBase();
+    function abrirModalNuevaBase() {
+        const modal = document.getElementById('modalNuevaBase');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        const campoNombre = document.getElementById('nombre_base');
+        if (campoNombre) {
+            setTimeout(() => campoNombre.focus(), 100);
         }
-
-    }
-);
-
-document.addEventListener('keydown', function(event) {
-
-    if (event.key === 'Escape') {
-        cerrarModalNuevaBase();
+        document.body.style.overflow = 'hidden';
     }
 
-});
+    function cerrarModalNuevaBase() {
+        const modal = document.getElementById('modalNuevaBase');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+    }
 
-function confirmarCierre(nombreBase) {
+    document.getElementById('modalNuevaBase').addEventListener('click', function(event) {
+        if (event.target === this) cerrarModalNuevaBase();
+    });
 
-    return confirm(
-        "¿Está seguro de cerrar la base de inventario '" +
-        nombreBase +
-        "'?\n\n" +
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') cerrarModalNuevaBase();
+    });
 
-        "Al cerrar la base:\n" +
-
-        "• Se guardará una fotografía histórica del inventario.\n" +
-        "• Se registrará la fecha y usuario de cierre.\n" +
-        "• Los productos del Maestro NO serán eliminados.\n" +
-        "• Los conteos históricos serán conservados.\n" +
-        "• La base quedará cerrada definitivamente.\n\n" +
-
-        "¿Desea continuar?"
-    );
-
-}
-
+    function confirmarCierre(nombreBase) {
+        return confirm(
+            "¿Está seguro de cerrar la base de inventario '" + nombreBase + "'?\n\n" +
+            "Al cerrar la base:\n" +
+            "• Se guardará una fotografía histórica del inventario.\n" +
+            "• Se registrará la fecha y usuario de cierre.\n" +
+            "• Los productos del Maestro NO serán eliminados.\n" +
+            "• Los conteos históricos serán conservados.\n" +
+            "• La base quedará cerrada definitivamente.\n\n" +
+            "¿Desea continuar?"
+        );
+    }
 </script>
 
 {% endblock %}
