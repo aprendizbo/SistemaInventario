@@ -94,7 +94,8 @@ TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # RUTAS DE AUTENTICACIÓN
 LOGIN_URL = '/inventario/login/'  
